@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/Gurgy/BooGroCha/chalmers"
+	"github.com/williamleven/BooGroCha/chalmers"
 	"github.com/spf13/viper"
 )
 

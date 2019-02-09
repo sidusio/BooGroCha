@@ -3,7 +3,7 @@ package chalmers
 import (
 	"encoding/json"
 	"fmt"
-	B "github.com/Gurgy/BooGroCha"
+	B "github.com/williamleven/BooGroCha"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
