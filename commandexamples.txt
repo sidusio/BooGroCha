@@ -1,0 +1,27 @@
+bgc book today    08:15-08:30 --room KG35
+bgc book tomorrow 08:15-08:30 --lindholmen
+bgc book tuesday  08:15-08:30 --johanneberg
+bgc book 190215   08:15-08:30 -m "your message"
+bgc book 0215     08:15-08:30
+bgc book 15       08:15-08:30
+bgc book tomorrow lunch
+bgc book monday   12-13
+bgc book
+
+bgc config set campus   lindholmen
+bgc config set campus   johanneberg (default)
+bgc config set username emil
+bgc config set password emilslösen (ska varna om osäker sparning!)
+bgc config get username
+bgc config get campus
+
+bgc list --id
+bgc list
+
+bgc delete 
+bgc delete id
+bgc delete text
+bgc delete --all
+
+(config room prio order)
+
