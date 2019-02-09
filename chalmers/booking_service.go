@@ -3,8 +3,8 @@ package chalmers
 import (
 	"encoding/json"
 	"fmt"
-	B "github.com/williamleven/BooGroCha"
 	"github.com/PuerkitoBio/goquery"
+	B "github.com/williamleven/BooGroCha"
 	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
 	"log"
@@ -32,7 +32,7 @@ func (bs BookingService) Book(booking B.Booking) error {
 	if err != nil {
 		return err
 	}
-	formData.Add("o", roomId) // Denotes the room
+	formData.Add("o", roomId)       // Denotes the room
 	formData.Add("o", otherPurpose) // Denotes the purpose always "other"
 	formData.Add("dates", booking.Start.Format("20060102"))
 	formData.Add("starttime", booking.Start.Format("15:04"))
@@ -89,7 +89,7 @@ func (bs BookingService) MyBookings() ([]B.Booking, error) {
 
 	selections := doc.Find("body #texttable table tr")
 
-	trs := make([]*goquery.Selection, selections.Length() - 2)
+	trs := make([]*goquery.Selection, selections.Length()-2)
 	selections.Each(func(i int, selection *goquery.Selection) {
 		if i >= 2 {
 			trs[i-2] = selection
@@ -178,8 +178,7 @@ func (bs BookingService) Available(start time.Time, end time.Time) ([]string, er
 		result = append(result, room.Name)
 	}
 	return result, nil
- }
-
+}
 
 func NewBookingService(cid, pass string) (BookingService, error) {
 	// Setup http client with a cookie jar
@@ -194,7 +193,7 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 	// Initiate SAML auth flow
 	resp, err := client.Get(samelURL)
 	if err != nil {
-		return BookingService{},err
+		return BookingService{}, err
 	}
 
 	// Extract login form from request to cover XSS prevention values
@@ -224,7 +223,7 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 
 	// Check if login was successful
 	success := false
-	for key := range form.Values  {
+	for key := range form.Values {
 		if key == "SAMLResponse" {
 			success = true
 			break
@@ -247,7 +246,7 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 		return BookingService{}, err
 	}
 	success = false
-	for _, cookie := range jar.Cookies(u)  {
+	for _, cookie := range jar.Cookies(u) {
 		if cookie.Name == "TEchalmersweb" {
 			success = true
 			break
@@ -257,7 +256,7 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 		return BookingService{}, fmt.Errorf("failed to retrive cookie")
 	}
 
-	bs :=  BookingService{
+	bs := BookingService{
 		client: client,
 	}
 
@@ -270,7 +269,7 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 	return bs, nil
 }
 
-func printCookies(jar http.CookieJar, u string)  {
+func printCookies(jar http.CookieJar, u string) {
 	ur, err := url.Parse(u)
 	if err != nil {
 		log.Fatal(err)
@@ -281,11 +280,11 @@ func printCookies(jar http.CookieJar, u string)  {
 }
 
 func (bs BookingService) fetchRooms(extra string) (rooms, error) {
-	var jsonResponse struct{
+	var jsonResponse struct {
 		HasMore bool `json:"hasMore"`
-		Rooms []struct{
-			Id   string `json:"idAndType"`
-			Fields struct{
+		Rooms   []struct {
+			Id     string `json:"idAndType"`
+			Fields struct {
 				Name string `json:"Lokalsignatur"`
 			} `json:"fields"`
 		} `json:"objects"`

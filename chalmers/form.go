@@ -12,7 +12,7 @@ type form struct {
 	Action string
 }
 
-func getForm(resp *http.Response, selector string) (form, error)  {
+func getForm(resp *http.Response, selector string) (form, error) {
 	// Extract the form element
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
@@ -49,6 +49,6 @@ func getForm(resp *http.Response, selector string) (form, error)  {
 	}, nil
 }
 
-func (f *form) Post(client *http.Client) (*http.Response, error)  {
+func (f *form) Post(client *http.Client) (*http.Response, error) {
 	return client.PostForm(f.Action, f.Values)
 }

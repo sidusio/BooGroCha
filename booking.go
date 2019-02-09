@@ -5,9 +5,9 @@ import (
 )
 
 type Booking struct {
-	Room   string
-	Start  time.Time
-	End    time.Time
-	Text   string
-	Id     string
+	Room  string
+	Start time.Time
+	End   time.Time
+	Text  string
+	Id    string
 }

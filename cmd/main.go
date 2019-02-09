@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/williamleven/BooGroCha/chalmers"
 	"github.com/spf13/viper"
+	"github.com/williamleven/BooGroCha/chalmers"
 )
 
-const ApplicationName  = "BooGroCha"
+const ApplicationName = "BooGroCha"
 
 func init() {
 	err := loadConfig()

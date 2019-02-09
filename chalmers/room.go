@@ -9,7 +9,7 @@ type room struct {
 
 type rooms []room
 
-func (rs rooms) idFromName(name string) (string, error){
+func (rs rooms) idFromName(name string) (string, error) {
 	for _, room := range rs {
 		if room.Name == name {
 			return room.Id, nil
@@ -18,7 +18,7 @@ func (rs rooms) idFromName(name string) (string, error){
 	return "", fmt.Errorf("no such room")
 }
 
-func (rs rooms) nameFromId(id string) (string, error){
+func (rs rooms) nameFromId(id string) (string, error) {
 	for _, room := range rs {
 		if room.Id == id {
 			return room.Name, nil
