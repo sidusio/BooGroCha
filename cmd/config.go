@@ -89,7 +89,7 @@ var configGetCmd = &cobra.Command{
 	Short: "Get config option",
 	Long:  "Get config option",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Print(viper.GetString(fmt.Sprintf("chalmers.%s", args[0])))
+		fmt.Println(viper.GetString(fmt.Sprintf("chalmers.%s", args[0])))
 	},
 	Args:      cobra.ExactValidArgs(1),
 	ValidArgs: validGetArgs,
