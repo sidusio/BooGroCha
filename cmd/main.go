@@ -65,7 +65,7 @@ func main() {
 func getBookingService() B.BookingService {
 	bs, err := chalmers.NewBookingService(viper.GetString("chalmers.cid"), getPassword())
 	if err != nil {
-		fmt.Printf("Failed to login: %s±n", err.Error())
+		fmt.Printf("Failed to login: %s\n", err.Error())
 		os.Exit(1)
 	}
 	return bs
@@ -87,6 +87,7 @@ func getPassword() string {
 	password, err := b64.StdEncoding.DecodeString(viper.GetString("chalmers.pass"))
 	if err != nil {
 		fmt.Printf("Failed to read password: %s\n", err.Error())
+		os.Exit(1)
 	}
 	return string(password)
 }
