@@ -1,6 +1,7 @@
 package main
 
 import (
+	b64 "encoding/base64"
 	"fmt"
 	B "github.com/williamleven/BooGroCha"
 	"github.com/williamleven/BooGroCha/chalmers"
@@ -62,7 +63,7 @@ func main() {
 }
 
 func getBookingService() B.BookingService {
-	bs, err := chalmers.NewBookingService(viper.GetString("chalmers.cid"), viper.GetString("chalmers.pass"))
+	bs, err := chalmers.NewBookingService(viper.GetString("chalmers.cid"), getPassword())
 	if err != nil {
 		fmt.Printf("Failed to login: %s±n", err.Error())
 		os.Exit(1)
@@ -78,11 +79,17 @@ func credentials() string {
 		fmt.Println("failed to read password")
 		os.Exit(1)
 	}
-
-	password := string(bytePassword)
-	return strings.TrimSpace(password)
+	encPass := b64.StdEncoding.EncodeToString([]byte(strings.TrimSpace(string(bytePassword))))
+	return encPass
 }
 
+func getPassword() string {
+	password, err := b64.StdEncoding.DecodeString(viper.GetString("chalmers.pass"))
+	if err != nil {
+		fmt.Printf("Failed to read password: %s\n", err.Error())
+	}
+	return string(password)
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "bgc",
