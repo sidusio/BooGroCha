@@ -3,7 +3,7 @@ bgc book tomorrow 08:15-08:30 --lindholmen
 bgc book tuesday  08:15-08:30 --johanneberg
 bgc book 190215   08:15-08:30 -m "your message"
 bgc book 0215     08:15-08:30
-bgc book 15       08:15-08:30
+bgc book 15       0815-0830
 bgc book tomorrow lunch
 bgc book monday   12-13
 bgc book
