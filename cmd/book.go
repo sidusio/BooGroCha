@@ -32,6 +32,7 @@ var bookCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+
 		available, err := bs.Available(date.Add(start), date.Add(end))
 		if err != nil {
 			fmt.Println(err)
@@ -65,7 +66,7 @@ func extractTimes(s string) (time.Duration, time.Duration, error) {
 		case "lunch":
 			return time.Hour * 12, time.Hour * 13, nil
 		default:
-			return time.Second, time.Second, fmt.Errorf("failed to parse times from %s, s")
+			return time.Second, time.Second, fmt.Errorf("failed to parse times from %s, s", s)
 		}
 	}
 }
@@ -102,67 +103,72 @@ func extractDate(s string) (time.Time, error) {
 	case "tomorrow":
 		return time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, n.Location()).Add(time.Hour * 24), nil
 	default:
-		weekday, err := parseWeekday(strings.ToLower(s))
-		if err == nil {
-			diff := daysToAdd(n.Weekday(), weekday)
-			return time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, n.Location()).Add(time.Hour * 24 * time.Duration(diff)), nil
-		} else {
-			switch len(s) {
-			case 2:
-				day, err := strconv.Atoi(s)
-				if err != nil {
-					return n, fmt.Errorf("couldn't parse day from %s", s)
-				}
-				t := time.Date(n.Year(), n.Month(), day, 0, 0, 0, 0, n.Location())
-				if day < n.Day() {
-					t = incMonth(t)
-				}
-				return t, nil
-
-			case 4:
-				day, err := strconv.Atoi(s[2:])
-				if err != nil {
-					return n, fmt.Errorf("couldn't parse day from %s", s[2:])
-				}
-				month, err := strconv.Atoi(s[:2])
-				if err != nil {
-					return n, fmt.Errorf("couldn't parse day from %s", s[:2])
-				}
-				year := n.Year()
-				if month < int(n.Month()) || (month == int(n.Month()) && day < n.Day()) { //todo check time
-					year++
-				}
-				return time.Date(year, time.Month(month), day, n.Hour(), n.Minute(), n.Second(), n.Nanosecond(), n.Location()), nil
-			case 6:
-				day, err := strconv.Atoi(s[4:])
-				if err != nil {
-					return n, fmt.Errorf("couldn't parse day from %s", s[4:])
-				}
-				month, err := strconv.Atoi(s[2:4])
-				if err != nil {
-					return n, fmt.Errorf("couldn't parse day from %s", s[2:4])
-				}
-				year, err := strconv.Atoi(s[:4])
-				year += (n.Year() / 100) * 100
-				if year >= n.Year() && month >= int(n.Month()) && day >= n.Day(){ //todo check time
-					year += 100
-				}
-				return time.Date(year, time.Month(month), day, n.Hour(), n.Minute(), n.Second(), n.Nanosecond(), n.Location()), nil
-			case 8: // will only work until year 9999
-				day, err := strconv.Atoi(s[6:])
-				if err != nil {
-					return n, fmt.Errorf("couldn't parse day from %s", s[6:])
-				}
-				month, err := strconv.Atoi(s[4:6])
-				if err != nil {
-					return n, fmt.Errorf("couldn't parse day from %s", s[4:6])
-				}
-				year, err := strconv.Atoi(s[:4])
-				return time.Date(year, time.Month(month), day, n.Hour(), n.Minute(), n.Second(), n.Nanosecond(), n.Location()), nil
-			default:
-				return n, fmt.Errorf("could not parse date from %s", s)
-			}
+		t, err := extractDateAbsolute(s, n)
+		if err != nil {
+			return n, err
 		}
+		return t, nil
+	}
+}
+
+func extractDateAbsolute(s string, n time.Time) (time.Time, error) {
+	weekday, err := parseWeekday(strings.ToLower(s))
+	if err == nil {
+		diff := daysToAdd(n.Weekday(), weekday)
+		t := time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, n.Location())
+		return t.Add(time.Hour * 24 * time.Duration(diff)), nil
+	}
+
+	switch len(s) {
+	case 1:
+		format := "2"
+		t, err := time.ParseInLocation(format, s, n.Location())
+		if err != nil {
+			return n, err
+		}
+		t = t.AddDate(n.Year(), int(n.Month()) - 1, 0)
+		if t.Day() < n.Day() {
+			t = incMonth(t)
+		}
+		return t, nil
+	case 2:
+		format := "02"
+		t, err := time.ParseInLocation(format, s, n.Location())
+		if err != nil {
+			return n, err
+		}
+		t = t.AddDate(n.Year(), int(n.Month()) - 1, 0)
+		if t.Day() < n.Day() {
+			t = incMonth(t)
+		}
+		return t, nil
+	case 4:
+		format := "0102"
+		t, err := time.ParseInLocation(format, s, n.Location())
+		if err != nil {
+			return n, err
+		}
+		t = t.AddDate(n.Year(), 0, 0)
+		if t.Month() < n.Month() || (t.Month() == n.Month() && t.Day() < n.Day()) {
+			t = t.AddDate(1, 0, 0)
+		}
+		return t, nil
+	case 6:
+		format := "060102"
+		t, err := time.ParseInLocation(format, s, n.Location())
+		if err != nil {
+			return n, err
+		}
+		return t, nil
+	case 8:
+		format := "20160102"
+		t, err := time.ParseInLocation(format, s, n.Location())
+		if err != nil {
+			return n, err
+		}
+		return t, nil
+	default:
+		return n, fmt.Errorf("could not parse date from %s", s)
 	}
 }
 
@@ -197,6 +203,5 @@ func parseWeekday(v string) (time.Weekday, error) {
 	if d, ok := daysOfWeek[v]; ok {
 		return d, nil
 	}
-
 	return time.Sunday, fmt.Errorf("invalid weekday format '%s'", v)
 }
