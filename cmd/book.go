@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/williamleven/BooGroCha"
 	"os"
 	"strconv"
 	"strings"
@@ -32,14 +34,63 @@ var bookCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		startDate := date.Add(start)
+		endDate := date.Add(end)
 
-		available, err := bs.Available(date.Add(start), date.Add(end))
+		available, err := bs.Available(startDate, endDate)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		fmt.Println(available)
 
+		showAvailable(available)
+
+		fmt.Println("==> Room to book")
+		fmt.Print("==> ")
+
+		reader := bufio.NewReader(os.Stdin)
+
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			panic(err)
+		}
+		input = strings.Replace(input, "\n", "", -1)
+
+		n, err := strconv.Atoi(input)
+		n--
+		if err != nil {
+			fmt.Printf("invalid booking")
+			os.Exit(1)
+		}
+
+		fmt.Println("==> Message to add with the booking (default: empty)")
+		fmt.Print("==> ")
+
+		message, err := reader.ReadString('\n')
+		if err != nil {
+			panic(err)
+		}
+		message = strings.Replace(message, "\n", "", -1)
+
+
+		if n < len(available) && n >= 0 {
+			fmt.Printf("Booking %s...\n", available[n])
+			booking := booking_demo.Booking{
+				Room:  available[n],
+				Start: startDate,
+				End:   endDate,
+				Text:  message,
+			}
+			err := bs.Book(booking)
+			if err != nil {
+				fmt.Println("couldn't book room")
+				os.Exit(1)
+			}
+			fmt.Printf("Booked %s successfully!\n", available[n])
+
+		} else {
+			print("no such booking")
+		}
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		if a := len(args); a > 2 || a == 1 {
@@ -47,6 +98,16 @@ var bookCmd = &cobra.Command{
 		}
 		return nil
 	},
+}
+
+func showAvailable(available []string) {
+	for i, room := range available {
+		fmt.Printf("%4s %-7s\n",
+			fmt.Sprintf("[%d]",i+1),
+			room,
+		)
+
+	}
 }
 
 func extractTimes(s string) (time.Duration, time.Duration, error) {
