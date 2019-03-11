@@ -23,19 +23,7 @@ var bookCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		bs := getBookingService()
 
-		date, err := extractDate(args[0])
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		start, end, err := extractTimes(args[1])
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		startDate := date.Add(start)
-		endDate := date.Add(end)
+		startDate, endDate := readArgs(args)
 
 		available, err := bs.Available(startDate, endDate)
 		if err != nil {
@@ -45,32 +33,16 @@ var bookCmd = &cobra.Command{
 
 		showAvailable(available)
 
-		fmt.Println("==> Room to book")
-		fmt.Print("==> ")
+		room := prompt("Room to book")
 
-		reader := bufio.NewReader(os.Stdin)
-
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			panic(err)
-		}
-		input = strings.Replace(input, "\n", "", -1)
-
-		n, err := strconv.Atoi(input)
+		n, err := strconv.Atoi(room)
 		n--
 		if err != nil {
 			fmt.Printf("invalid booking")
 			os.Exit(1)
 		}
 
-		fmt.Println("==> Message to add with the booking (default: empty)")
-		fmt.Print("==> ")
-
-		message, err := reader.ReadString('\n')
-		if err != nil {
-			panic(err)
-		}
-		message = strings.Replace(message, "\n", "", -1)
+		message := prompt("Message to add with the booking (default: empty)")
 
 
 		if n < len(available) && n >= 0 {
@@ -98,6 +70,34 @@ var bookCmd = &cobra.Command{
 		}
 		return nil
 	},
+}
+
+func prompt(message string) string {
+	fmt.Printf("==> %s\n", message)
+	fmt.Print("==> ")
+
+	reader := bufio.NewReader(os.Stdin)
+
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		panic(err)
+	}
+	return strings.Replace(input, "\n", "", -1)
+}
+
+func readArgs(args []string) (time.Time, time.Time) {
+	date, err := extractDate(args[0])
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	start, end, err := extractTimes(args[1])
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	return date.Add(start), date.Add(end)
 }
 
 func showAvailable(available []string) {
