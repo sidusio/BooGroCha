@@ -11,12 +11,12 @@ import (
 	"os"
 	"strings"
 	"syscall"
+	"github.com/mitchellh/go-homedir"
 )
 
 const ApplicationName = "BooGroCha"
 
 func init() {
-
 
 	loadFlags()
 
@@ -44,13 +44,41 @@ func bindFlags() error {
 
 func loadConfig() error {
 
-	viper.SetConfigName("config")                                   // name of config file (without extension)
-	viper.AddConfigPath(fmt.Sprintf("/etc/%s/", ApplicationName))   // path to look for the config file in
-	viper.AddConfigPath(fmt.Sprintf("$HOME/.%s/", ApplicationName)) // call multiple times to add many search paths
-	viper.AddConfigPath(".")                                        // optionally look for config in the working directory
+	home, err := homedir.Dir()
+	if err != nil {
+		return err
+	}
+	configPath := fmt.Sprintf("%s/.%s/", home, ApplicationName)
 
-	err := viper.ReadInConfig() // Find and read the config file
-	return err
+	viper.SetConfigName("config")                                   // name of config file (without extension)
+	viper.AddConfigPath(configPath) // call multiple times to add many search paths
+
+	viper.SetDefault("chalmers.cid", "")
+	viper.SetDefault("chalmers.pass", "")
+	viper.SetDefault("chalmers.campus", "johanneberg")
+
+	// Create config folder
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		err = os.MkdirAll(configPath, 0744)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Write config file if it doesn't exists
+	if _, err := os.Stat(configPath + "config.toml"); os.IsNotExist(err) {
+		err = viper.WriteConfigAs(configPath + "config.toml")
+		if err != nil {
+			return err
+		}
+		// Make sure no one else can reed the config file
+		err = os.Chmod(configPath + "config.toml", 0600)
+		if err != nil {
+			return err
+		}
+	}
+
+	return viper.ReadInConfig() // Find and read the config file
 
 }
 
