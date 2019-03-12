@@ -18,7 +18,7 @@ var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage settings",
 	Long:  `Configure your campus and credentials`,
-	Run: nil,
+	Run:   nil,
 }
 
 var validGetArgs = []string{"campus", "cid"}
@@ -28,7 +28,7 @@ var validCampuses = []string{"johanneberg", "lindholmen"}
 var configSetCmd = &cobra.Command{
 	Use:   fmt.Sprintf("set {%s} {value}", strings.Join(validSetArgs, "|")),
 	Short: "Set config option",
-	Long:  fmt.Sprintf(
+	Long: fmt.Sprintf(
 		"Set config option.\nValue should not be provided for the pass config option.\nValid campuses are (%s).",
 		strings.Join(validCampuses, ", "),
 	),
@@ -45,7 +45,7 @@ var configSetCmd = &cobra.Command{
 		// Verify that the campus is valid
 		if args[0] == "campus" {
 			valid := false
-			for _, v := range validCampuses  {
+			for _, v := range validCampuses {
 				if v == args[1] {
 					valid = true
 					break

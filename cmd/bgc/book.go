@@ -44,7 +44,6 @@ var bookCmd = &cobra.Command{
 
 		message := prompt("Message to add with the booking (default: empty)")
 
-
 		if n < len(available) && n >= 0 {
 			fmt.Printf("Booking %s...\n", available[n])
 			booking := booking_demo.Booking{
@@ -103,7 +102,7 @@ func readArgs(args []string) (time.Time, time.Time) {
 func showAvailable(available []string) {
 	for i, room := range available {
 		fmt.Printf("%4s %-7s\n",
-			fmt.Sprintf("[%d]",i+1),
+			fmt.Sprintf("[%d]", i+1),
 			room,
 		)
 
@@ -122,7 +121,7 @@ func extractTimes(s string) (time.Duration, time.Duration, error) {
 			return time.Second, time.Second, err
 		}
 		return start, end, nil
-	}else{
+	} else {
 		switch s {
 		case "lunch":
 			return time.Hour * 12, time.Hour * 13, nil
@@ -154,7 +153,7 @@ func extractTime(s string) (time.Duration, error) {
 	if err != nil {
 		return time.Nanosecond, err
 	}
-	return time.Hour * time.Duration(h) + time.Minute * time.Duration(m), nil
+	return time.Hour*time.Duration(h) + time.Minute*time.Duration(m), nil
 }
 
 func extractDate(s string) (time.Time, error) {
@@ -187,7 +186,7 @@ func extractDateAbsolute(s string, n time.Time) (time.Time, error) {
 		if err != nil {
 			return n, err
 		}
-		t = t.AddDate(n.Year(), int(n.Month()) - 1, 0)
+		t = t.AddDate(n.Year(), int(n.Month())-1, 0)
 		if t.Day() < n.Day() {
 			t = incMonth(t)
 		}
@@ -198,7 +197,7 @@ func extractDateAbsolute(s string, n time.Time) (time.Time, error) {
 		if err != nil {
 			return n, err
 		}
-		t = t.AddDate(n.Year(), int(n.Month()) - 1, 0)
+		t = t.AddDate(n.Year(), int(n.Month())-1, 0)
 		if t.Day() < n.Day() {
 			t = incMonth(t)
 		}
@@ -235,13 +234,13 @@ func extractDateAbsolute(s string, n time.Time) (time.Time, error) {
 
 func incMonth(t time.Time) time.Time {
 	if t.Month() == 12 {
-		return time.Date(t.Year() + 1, 1, t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), t.Location())
+		return time.Date(t.Year()+1, 1, t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), t.Location())
 	} else {
-		return time.Date(t.Year(), t.Month() + 1, t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), t.Location())
+		return time.Date(t.Year(), t.Month()+1, t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), t.Location())
 	}
 }
 
-func daysToAdd (from, to time.Weekday) int {
+func daysToAdd(from, to time.Weekday) int {
 	d := len(daysOfWeek)
 	daysToAdd := (int(to) - int(from) + d) % d
 	if daysToAdd == 0 {

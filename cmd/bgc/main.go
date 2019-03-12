@@ -3,15 +3,15 @@ package main
 import (
 	b64 "encoding/base64"
 	"fmt"
-	B "github.com/williamleven/BooGroCha"
-	"github.com/williamleven/BooGroCha/chalmers"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	B "github.com/williamleven/BooGroCha"
+	"github.com/williamleven/BooGroCha/chalmers"
 	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"strings"
 	"syscall"
-	"github.com/mitchellh/go-homedir"
 )
 
 const ApplicationName = "BooGroCha"
@@ -50,7 +50,7 @@ func loadConfig() error {
 	}
 	configPath := fmt.Sprintf("%s/.%s/", home, ApplicationName)
 
-	viper.SetConfigName("config")                                   // name of config file (without extension)
+	viper.SetConfigName("config")   // name of config file (without extension)
 	viper.AddConfigPath(configPath) // call multiple times to add many search paths
 
 	viper.SetDefault("chalmers.cid", "")
@@ -72,7 +72,7 @@ func loadConfig() error {
 			return err
 		}
 		// Make sure no one else can reed the config file
-		err = os.Chmod(configPath + "config.toml", 0600)
+		err = os.Chmod(configPath+"config.toml", 0600)
 		if err != nil {
 			return err
 		}
