@@ -17,47 +17,7 @@ func BookCmd(getBS func() booking.BookingService) *cobra.Command {
 		Short: "Create a booking",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
-			bs := getBS()
-
-			startDate, endDate := readArgs(args)
-
-			available, err := bs.Available(startDate, endDate)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			showAvailable(available)
-
-			room := prompt("Room to book")
-
-			n, err := strconv.Atoi(room)
-			n--
-			if err != nil {
-				fmt.Printf("invalid booking")
-				os.Exit(1)
-			}
-
-			message := prompt("Message to add with the booking (default: empty)")
-
-			if n < len(available) && n >= 0 {
-				fmt.Printf("Booking %s...\n", available[n])
-				booking := booking.Booking{
-					Room:  available[n],
-					Start: startDate,
-					End:   endDate,
-					Text:  message,
-				}
-				err := bs.Book(booking)
-				if err != nil {
-					fmt.Println("couldn't book room")
-					os.Exit(1)
-				}
-				fmt.Printf("Booked %s successfully!\n", available[n])
-
-			} else {
-				print("no such booking")
-			}
+			run(cmd, args, getBS)
 		},
 		Args: func(cmd *cobra.Command, args []string) error {
 			if a := len(args); a > 2 || a == 1 {
@@ -68,6 +28,49 @@ func BookCmd(getBS func() booking.BookingService) *cobra.Command {
 	}
 }
 
+func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService) {
+	bs := getBS()
+
+	startDate, endDate := readArgs(args)
+
+	available, err := bs.Available(startDate, endDate)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	showAvailable(available)
+
+	room := prompt("Room to book")
+
+	n, err := strconv.Atoi(room)
+	n--
+	if err != nil {
+		fmt.Printf("invalid booking")
+		os.Exit(1)
+	}
+
+	message := prompt("Message to add with the booking (default: empty)")
+
+	if n < len(available) && n >= 0 {
+		fmt.Printf("Booking %s...\n", available[n])
+		booking := booking.Booking{
+			Room:  available[n],
+			Start: startDate,
+			End:   endDate,
+			Text:  message,
+		}
+		err := bs.Book(booking)
+		if err != nil {
+			fmt.Println("couldn't book room")
+			os.Exit(1)
+		}
+		fmt.Printf("Booked %s successfully!\n", available[n])
+
+	} else {
+		print("no such booking")
+	}
+}
 
 func prompt(message string) string {
 	fmt.Printf("==> %s\n", message)

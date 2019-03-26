@@ -36,39 +36,7 @@ var configSetCmd = &cobra.Command{
 		"Set config option.\nValue should not be provided for the pass config option.\nValid campuses are (%s).",
 		strings.Join(validCampuses, ", "),
 	),
-	Run: func(cmd *cobra.Command, args []string) {
-
-		// Get the value or grab the password
-		var value string
-		if args[0] == "pass" {
-			value = credentials()
-		} else {
-			value = args[1]
-		}
-
-		// Verify that the campus is valid
-		if args[0] == "campus" {
-			valid := false
-			for _, v := range validCampuses {
-				if v == args[1] {
-					valid = true
-					break
-				}
-			}
-			if !valid {
-				fmt.Printf("%s is not a valid campus\n", args[1])
-				os.Exit(1)
-			}
-		}
-
-		// Set and save config options
-		viper.Set(fmt.Sprintf("chalmers.%s", args[0]), value)
-		err := viper.WriteConfig()
-		if err != nil {
-			fmt.Printf("Failed to write to config: %s\n", err.Error())
-			os.Exit(1)
-		}
-	},
+	Run:       setConfig,
 	ValidArgs: validSetArgs,
 	Args: func(cmd *cobra.Command, args []string) error {
 
@@ -81,11 +49,42 @@ var configSetCmd = &cobra.Command{
 		}
 		if args[0] == "pass" {
 			return cobra.ExactArgs(1)(cmd, args)
-		} else {
-			return cobra.ExactArgs(2)(cmd, args)
 		}
-
+		return cobra.ExactArgs(2)(cmd, args)
 	},
+}
+
+func setConfig(cmd *cobra.Command, args []string) {
+	// Get the value or grab the password
+	var value string
+	if args[0] == "pass" {
+		value = credentials()
+	} else {
+		value = args[1]
+	}
+
+	// Verify that the campus is valid
+	if args[0] == "campus" {
+		valid := false
+		for _, v := range validCampuses {
+			if v == args[1] {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			fmt.Printf("%s is not a valid campus\n", args[1])
+			os.Exit(1)
+		}
+	}
+
+	// Set and save config options
+	viper.Set(fmt.Sprintf("chalmers.%s", args[0]), value)
+	err := viper.WriteConfig()
+	if err != nil {
+		fmt.Printf("Failed to write to config: %s\n", err.Error())
+		os.Exit(1)
+	}
 }
 
 var configGetCmd = &cobra.Command{
