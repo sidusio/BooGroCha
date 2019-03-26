@@ -8,6 +8,7 @@ import (
 )
 
 const ApplicationName = "BooGroCha"
+const Version = "0.1"
 
 func init() {
 
@@ -15,7 +16,7 @@ func init() {
 	BgcCmd.AddCommand(commands.ConfigCmd())
 	BgcCmd.AddCommand(commands.DeleteCmd(getBookingService))
 	BgcCmd.AddCommand(commands.ListCmd(getBookingService))
-	BgcCmd.AddCommand(commands.VersionCmd())
+	BgcCmd.AddCommand(commands.VersionCmd(ApplicationName, Version))
 
 	loadFlags()
 
