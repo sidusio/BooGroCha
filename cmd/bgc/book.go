@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/williamleven/BooGroCha"
+	"sidus.io/boogrocha"
 	"os"
 	"strconv"
 	"strings"

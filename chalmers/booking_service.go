@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	B "github.com/williamleven/BooGroCha"
+	B "sidus.io/boogrocha"
 	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
 	"log"
