@@ -45,4 +45,3 @@ func ListCmd(getBS func() booking.BookingService) *cobra.Command {
 
 	return ListCmd
 }
-

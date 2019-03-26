@@ -68,7 +68,6 @@ func BookCmd(getBS func() booking.BookingService) *cobra.Command {
 	}
 }
 
-
 func prompt(message string) string {
 	fmt.Printf("==> %s\n", message)
 	fmt.Print("==> ")

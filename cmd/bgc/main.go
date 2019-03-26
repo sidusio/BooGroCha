@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	if err := cli.RootCmd.Execute(); err != nil {
+	if err := cli.BgcCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }

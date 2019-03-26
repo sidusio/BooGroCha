@@ -18,7 +18,6 @@ func getBookingService() booking.BookingService {
 	return bs
 }
 
-
 func getPassword() string {
 	password, err := base64.StdEncoding.DecodeString(viper.GetString("chalmers.pass"))
 	if err != nil {
