@@ -1,24 +1,28 @@
-package main
+package commands
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"strings"
+	"syscall"
 )
 
-func init() {
-	rootCmd.AddCommand(configCmd)
-	configCmd.AddCommand(configGetCmd)
-	configCmd.AddCommand(configSetCmd)
-}
+func ConfigCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "config",
+		Short: "Manage settings",
+		Long:  `Configure your campus and credentials`,
+		Run:   nil,
+	}
 
-var configCmd = &cobra.Command{
-	Use:   "config",
-	Short: "Manage settings",
-	Long:  `Configure your campus and credentials`,
-	Run:   nil,
+	cmd.AddCommand(configGetCmd)
+	cmd.AddCommand(configSetCmd)
+
+	return cmd
 }
 
 var validGetArgs = []string{"campus", "cid"}
@@ -93,4 +97,19 @@ var configGetCmd = &cobra.Command{
 	},
 	Args:      cobra.ExactValidArgs(1),
 	ValidArgs: validGetArgs,
+}
+
+func credentials() string {
+	fmt.Println("***************************************************")
+	fmt.Println("* WARNING: The password won't be securely stored! *")
+	fmt.Println("***************************************************")
+	fmt.Print("Enter Password: ")
+	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	fmt.Println()
+	if err != nil {
+		fmt.Println("failed to read password")
+		os.Exit(1)
+	}
+	encPass := base64.StdEncoding.EncodeToString([]byte(strings.TrimSpace(string(bytePassword))))
+	return encPass
 }

@@ -1,4 +1,4 @@
-package booking_demo
+package booking
 
 import "time"
 

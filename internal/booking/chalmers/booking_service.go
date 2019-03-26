@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	B "sidus.io/boogrocha"
 	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"sidus.io/boogrocha/internal/booking"
 	"strings"
 	"time"
 )
@@ -26,7 +26,7 @@ type BookingService struct {
 	rooms  rooms
 }
 
-func (bs BookingService) Book(booking B.Booking) error {
+func (bs BookingService) Book(booking booking.Booking) error {
 	formData := url.Values{}
 	roomId, err := bs.rooms.idFromName(booking.Room)
 	if err != nil {
@@ -56,7 +56,7 @@ func (bs BookingService) Book(booking B.Booking) error {
 	return nil
 }
 
-func (bs BookingService) UnBook(booking B.Booking) error {
+func (bs BookingService) UnBook(booking booking.Booking) error {
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s?id=%s", bookingsURL, booking.Id), nil)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func (bs BookingService) UnBook(booking B.Booking) error {
 	return nil
 }
 
-func (bs BookingService) MyBookings() ([]B.Booking, error) {
+func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 	resp, err := bs.client.Get(bookingsURL)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (bs BookingService) MyBookings() ([]B.Booking, error) {
 			trs[i-2] = selection
 		}
 	})
-	bookings := make([]B.Booking, 0, 4)
+	bookings := make([]booking.Booking, 0, 4)
 	selectedDate := ""
 	for _, tr := range trs {
 		headline := tr.Find(".headline.changeDateLink")
@@ -128,7 +128,7 @@ func (bs BookingService) MyBookings() ([]B.Booking, error) {
 				return nil, err
 			}
 
-			bookings = append(bookings, B.Booking{
+			bookings = append(bookings, booking.Booking{
 				Text:  text,
 				Start: startTime,
 				End:   endTime,
