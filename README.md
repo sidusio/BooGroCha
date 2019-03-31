@@ -9,7 +9,7 @@ A CLI client for chalmers' group room booking system.
 - [x] Save personal settings in config file
 - [x] List available bookings for selected time
 - [x] Delete bookings
-. [x] List bookings
+- [x] List bookings
 - [x] Relative times for bookings
 - [ ] [AUR package](https://github.com/williamleven/BooGroCha/issues/4)
 - [ ] [Rooms sorted base on user preferences](https://github.com/williamleven/BooGroCha/issues/5)
