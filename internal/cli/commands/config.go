@@ -102,7 +102,7 @@ func credentials() string {
 	fmt.Println("***************************************************")
 	fmt.Println("* WARNING: The password won't be securely stored! *")
 	fmt.Println("***************************************************")
-	fmt.Print("Enter Password: ")
+	fmt.Print("Enter Password (default: \"\"): ")
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	fmt.Println()
 	if err != nil {
