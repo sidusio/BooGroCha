@@ -311,6 +311,14 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 			return nil, err
 		}
 
+		/*
+			The HasMore boolean isn't always reliable
+			The API will return "Inga sökresultat" when there are no more rooms
+		*/
+		if string(jsonBytes) == "\"Inga sökresultat\"" {
+			break
+		}
+
 		err = json.Unmarshal(jsonBytes, &jsonResponse)
 		if err != nil {
 			return nil, err
@@ -323,11 +331,10 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 			})
 		}
 
-		if !jsonResponse.HasMore {
-
-			break
-		} else {
+		if jsonResponse.HasMore {
 			start += max
+		} else {
+			break
 		}
 	}
 
