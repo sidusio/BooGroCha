@@ -12,7 +12,7 @@ const Version = "0.1"
 
 func init() {
 
-	BgcCmd.AddCommand(commands.BookCmd(getBookingService))
+	BgcCmd.AddCommand(commands.BookCmd(getBookingService, getRankingService))
 	BgcCmd.AddCommand(commands.ConfigCmd())
 	BgcCmd.AddCommand(commands.DeleteCmd(getBookingService))
 	BgcCmd.AddCommand(commands.ListCmd(getBookingService))

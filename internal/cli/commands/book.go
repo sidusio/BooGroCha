@@ -6,18 +6,19 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"sidus.io/boogrocha/internal/booking"
+	"sidus.io/boogrocha/internal/ranking"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func BookCmd(getBS func() booking.BookingService) *cobra.Command {
+func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingService) *cobra.Command {
 	return &cobra.Command{
 		Use:   "book {day} {time}",
 		Short: "Create a booking",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
-			run(cmd, args, getBS)
+			run(cmd, args, getBS, getRS)
 		},
 		Args: func(cmd *cobra.Command, args []string) error {
 			if a := len(args); a > 2 || a == 1 {
@@ -28,7 +29,7 @@ func BookCmd(getBS func() booking.BookingService) *cobra.Command {
 	}
 }
 
-func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService) {
+func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService, getRS func() ranking.RankingService) {
 	bs := getBS()
 
 	startDate, endDate := readArgs(args)
@@ -37,6 +38,14 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	}
+
+	rs := getRS()
+	rankings, err := rs.GetRankings()
+	if err != nil {
+		fmt.Printf("Failed to get rankings: %v\n", err)
+	} else {
+		available = rankings.Sort(available)
 	}
 
 	showAvailable(available)
@@ -66,6 +75,14 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService)
 			os.Exit(1)
 		}
 		fmt.Printf("Booked %s successfully!\n", available[n])
+
+		if rankings != nil {
+			rankings.Update(available[n], available)
+			err := rs.SaveRankings(rankings)
+			if err != nil {
+				fmt.Printf("Could not save updated rankings: %v\n", err)
+			}
+		}
 
 	} else {
 		print("no such booking")
