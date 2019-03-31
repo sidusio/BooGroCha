@@ -10,7 +10,7 @@ func VersionCmd(appName, version string) *cobra.Command {
 		Use:   "version",
 		Short: "Print the version number",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Book Grouprooms at Chalmers: %s:%s", appName, version)
+			fmt.Printf("Book Grouprooms at Chalmers: %s:%s\n", appName, version)
 		},
 	}
 }

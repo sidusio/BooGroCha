@@ -61,7 +61,7 @@ func runDelete(cmd *cobra.Command, args []string, getBS func() booking.BookingSe
 	n, err := strconv.Atoi(input)
 	n--
 	if err != nil {
-		fmt.Printf("invalid booking")
+		fmt.Printf("invalid booking\n")
 		os.Exit(1)
 	}
 
@@ -75,7 +75,7 @@ func runDelete(cmd *cobra.Command, args []string, getBS func() booking.BookingSe
 		fmt.Println("Booking deleted successfully!")
 
 	} else {
-		print("no such booking")
+		fmt.Println("no such booking")
 	}
 
 }

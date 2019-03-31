@@ -46,7 +46,7 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService)
 	n, err := strconv.Atoi(room)
 	n--
 	if err != nil {
-		fmt.Printf("invalid booking")
+		fmt.Printf("invalid booking\n")
 		os.Exit(1)
 	}
 

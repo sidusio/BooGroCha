@@ -12,7 +12,7 @@ import (
 func getBookingService() booking.BookingService {
 	bs, err := chalmers.NewBookingService(viper.GetString("chalmers.cid"), getPassword())
 	if err != nil {
-		fmt.Printf("Failed to login: %s\n", err.Error())
+		fmt.Printf("Error: %s\n", err.Error())
 		os.Exit(1)
 	}
 	return bs
