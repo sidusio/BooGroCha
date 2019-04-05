@@ -2,7 +2,7 @@ package file
 
 import (
 	"encoding/json"
-	"github.com/spf13/viper"
+	"io/ioutil"
 	"os"
 	"sidus.io/boogrocha/internal/ranking"
 )
@@ -30,16 +30,33 @@ func NewRankingService(path string) (ranking.RankingService, error) {
 			return nil, err
 		}
 	}
-
+	return RankingService{
+		path: fullPath,
+	}, nil
 }
 
 type RankingService struct {
+	path string
 }
 
-func (RankingService) GetRankings() (ranking.Rankings, error) {
-	panic("implement me")
+func (rs RankingService) GetRankings() (ranking.Rankings, error) {
+	bytes, err := ioutil.ReadFile(rs.path)
+	if err != nil {
+		return nil, err
+	}
+
+	var data ranking.Rankings
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
-func (RankingService) SaveRankings(rankings ranking.Rankings) error {
-	panic("implement me")
+func (rs RankingService) SaveRankings(rankings ranking.Rankings) error {
+	data, _ := json.Marshal(rankings)
+
+	err := ioutil.WriteFile(rs.path, data, 0644)
+	return err
 }
