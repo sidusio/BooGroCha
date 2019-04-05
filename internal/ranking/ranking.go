@@ -23,11 +23,26 @@ func (r Rankings) Sort(rooms []string) []string {
 func (r Rankings) Update(selected string, pool []string) {
 	for _, room := range pool {
 		if room != selected {
+			diff := uint64(0)
 			if r[room] > r[selected] {
-				r[room] = r[room] + 1
+				diff = 1
 			} else {
-				r[room] = r[room] + 5
+				diff = 5
 			}
+			if uint64(diff+r[room]) < r[room] { // Handle overflow
+				r.Normalize(1000)
+			}
+			r[room] = diff + r[room]
+		}
+	}
+}
+
+func (r Rankings) Normalize(amount uint64) {
+	for key := range r {
+		if r[key] < uint64(r[key]-amount) {
+			r[key] = 0
+		} else {
+			r[key] = r[key] - amount
 		}
 	}
 }
