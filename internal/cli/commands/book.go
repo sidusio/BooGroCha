@@ -118,12 +118,12 @@ func readArgs(args []string) (time.Time, time.Time) {
 }
 
 func showAvailable(available []string) {
-	for i, room := range available {
+	for i := len(available) - 1; i >= 0; i-- {
+		room := available[i]
 		fmt.Printf("%4s %-7s\n",
 			fmt.Sprintf("[%d]", i+1),
 			room,
 		)
-
 	}
 }
 
