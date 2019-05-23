@@ -5,7 +5,7 @@ import (
 )
 
 type Booking struct {
-	Room  string
+	Room  Room
 	Start time.Time
 	End   time.Time
 	Text  string
