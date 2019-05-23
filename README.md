@@ -12,7 +12,7 @@ A CLI client for chalmers' group room booking system.
 - [x] List bookings
 - [x] Relative times for bookings
 - [ ] [AUR package](https://github.com/williamleven/BooGroCha/issues/4)
-- [ ] [Rooms sorted base on user preferences](https://github.com/williamleven/BooGroCha/issues/5)
+- [x] [Rooms sorted base on user preferences](https://github.com/williamleven/BooGroCha/issues/5)
 - [ ] [Option to only show rooms from preferred campus](https://github.com/williamleven/BooGroCha/issues/6)
 - [ ] [Integrate with Chalmers Library booking system](https://github.com/williamleven/BooGroCha/issues/7)
 - [ ] [Integrate with Johanneberg Student Union building booking system](https://github.com/williamleven/BooGroCha/issues/8)
