@@ -42,7 +42,7 @@ func runDelete(cmd *cobra.Command, args []string, getBS func() booking.BookingSe
 			i+1,
 			date,
 			time,
-			booking.Room,
+			booking.Room.Id,
 			text,
 		)
 	}

@@ -62,7 +62,7 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 	message := prompt("Message to add with the booking (default: empty)")
 
 	if n < len(available) && n >= 0 {
-		fmt.Printf("Booking %s...\n", available[n])
+		fmt.Printf("Booking %s...\n", available[n].Id)
 		booking := booking.Booking{
 			Room:  available[n],
 			Start: startDate,
@@ -74,7 +74,7 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 			fmt.Println("couldn't book room")
 			os.Exit(1)
 		}
-		fmt.Printf("Booked %s successfully!\n", available[n])
+		fmt.Printf("Booked %s successfully!\n", available[n].Id)
 
 		if rankings != nil {
 			rankings.Update(available[n], available)
