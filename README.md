@@ -16,7 +16,7 @@ A CLI client for chalmers' group room booking system.
 - [ ] [Option to only show rooms from preferred campus](https://github.com/williamleven/BooGroCha/issues/6)
 - [ ] [Integrate with Chalmers Library booking system](https://github.com/williamleven/BooGroCha/issues/7)
 - [ ] [Integrate with Johanneberg Student Union building booking system](https://github.com/williamleven/BooGroCha/issues/8)
-- [ ] [Prompt for password if not set](https://github.com/williamleven/BooGroCha/issues/9)
+- [x] [Prompt for password if not set](https://github.com/williamleven/BooGroCha/issues/9)
 
 
 ## Installation
