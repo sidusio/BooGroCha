@@ -4,8 +4,33 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"sidus.io/boogrocha/internal/booking"
 	"sidus.io/boogrocha/internal/ranking"
 )
+
+type rankedRoom struct {
+	Room booking.Room
+	Rank uint64
+}
+
+func rankedRoomsFrom(ranks ranking.Rankings) []rankedRoom {
+	var rankedRooms []rankedRoom
+	for room, rank := range ranks {
+		rankedRooms = append(rankedRooms, rankedRoom{
+			Room: room,
+			Rank: rank,
+		})
+	}
+	return rankedRooms
+}
+
+func rankingsFrom(rankedRooms []rankedRoom) ranking.Rankings {
+	rankings := make(ranking.Rankings)
+	for _, rRoom := range rankedRooms {
+		rankings[rRoom.Room] = rRoom.Rank
+	}
+	return rankings
+}
 
 func NewRankingService(path string) (ranking.RankingService, error) {
 
@@ -25,7 +50,7 @@ func NewRankingService(path string) (ranking.RankingService, error) {
 		if err != nil {
 			return nil, err
 		}
-		_, err = file.Write([]byte("{}"))
+		_, err = file.Write([]byte("[]"))
 		if err != nil {
 			return nil, err
 		}
@@ -45,17 +70,17 @@ func (rs RankingService) GetRankings() (ranking.Rankings, error) {
 		return nil, err
 	}
 
-	var data ranking.Rankings
+	var data []rankedRoom
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		return nil, err
 	}
 
-	return data, nil
+	return rankingsFrom(data), nil
 }
 
 func (rs RankingService) SaveRankings(rankings ranking.Rankings) error {
-	data, _ := json.Marshal(rankings)
+	data, _ := json.Marshal(rankedRoomsFrom(rankings))
 
 	err := ioutil.WriteFile(rs.path, data, 0644)
 	return err

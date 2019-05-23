@@ -39,7 +39,7 @@ func runList(cmd *cobra.Command, args []string, getBS func() booking.BookingServ
 			fmt.Printf("%-7s %-13s %-15s %s\n",
 				date,
 				time,
-				booking.Room,
+				booking.Room.Id,
 				text,
 			)
 		}

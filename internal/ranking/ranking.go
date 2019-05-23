@@ -1,26 +1,27 @@
 package ranking
 
 import (
+	"sidus.io/boogrocha/internal/booking"
 	"sort"
 )
 
 /**
 Ranking representation, a low rank is good
 */
-type Rankings map[string]uint64
+type Rankings map[booking.Room]uint64
 
-func (r Rankings) Sort(rooms []string) []string {
+func (r Rankings) Sort(rooms []booking.Room) []booking.Room {
 	sort.Slice(rooms, func(i, j int) bool {
 		if r[rooms[i]]-r[rooms[j]] != 0 {
 			return r[rooms[i]] < r[rooms[j]]
 		} else {
-			return rooms[i] > rooms[j]
+			return rooms[i].Id > rooms[j].Id
 		}
 	})
 	return rooms
 }
 
-func (r Rankings) Update(selected string, pool []string) {
+func (r Rankings) Update(selected booking.Room, pool []booking.Room) {
 	for _, room := range pool {
 		if room != selected {
 			diff := uint64(0)

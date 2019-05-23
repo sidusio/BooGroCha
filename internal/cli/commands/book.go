@@ -62,7 +62,7 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 	message := prompt("Message to add with the booking (default: empty)")
 
 	if n < len(available) && n >= 0 {
-		fmt.Printf("Booking %s...\n", available[n])
+		fmt.Printf("Booking %s...\n", available[n].Id)
 		booking := booking.Booking{
 			Room:  available[n],
 			Start: startDate,
@@ -74,7 +74,7 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 			fmt.Println("couldn't book room")
 			os.Exit(1)
 		}
-		fmt.Printf("Booked %s successfully!\n", available[n])
+		fmt.Printf("Booked %s successfully!\n", available[n].Id)
 
 		if rankings != nil {
 			rankings.Update(available[n], available)
@@ -117,12 +117,20 @@ func readArgs(args []string) (time.Time, time.Time) {
 	return date.Add(start), date.Add(end)
 }
 
-func showAvailable(available []string) {
+func showAvailable(available []booking.Room) {
 	for i := len(available) - 1; i >= 0; i-- {
 		room := available[i]
+
+		prevIsSame := i > 0 && available[i-1].Id == room.Id
+		nextIsSame := i < len(available) - 1 && available[i+1].Id == room.Id
+		roomName := room.Id
+		if prevIsSame || nextIsSame {
+			roomName = fmt.Sprintf("%s.%s", room.Provider, room.Id)
+		}
+
 		fmt.Printf("%4s %-7s\n",
 			fmt.Sprintf("[%d]", i+1),
-			room,
+			roomName,
 		)
 	}
 }

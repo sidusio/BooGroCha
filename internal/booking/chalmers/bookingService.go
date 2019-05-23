@@ -20,6 +20,7 @@ const bookURL = "https://cloud.timeedit.net/chalmers/web/b1/ri1Q5008.html"
 const objectsURL = "https://cloud.timeedit.net/chalmers/web/b1/objects.json?part=t&types=186&step=1"
 const bookingsURL = "https://cloud.timeedit.net/chalmers/web/b1/my.html"
 const otherPurpose = "203460.192"
+const providerName = "ChalmersTimeEdit"
 
 type BookingService struct {
 	client *http.Client
@@ -28,7 +29,7 @@ type BookingService struct {
 
 func (bs BookingService) Book(booking booking.Booking) error {
 	formData := url.Values{}
-	roomId, err := bs.rooms.idFromName(booking.Room)
+	roomId, err := bs.rooms.idFromName(booking.Room.Id)
 	if err != nil {
 		return err
 	}
@@ -132,7 +133,10 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 				Text:  text,
 				Start: startTime,
 				End:   endTime,
-				Room:  roomInfo,
+				Room:  booking.Room{
+					Provider: providerName,
+					Id:       roomInfo,
+				},
 				Id:    id,
 			})
 		}
@@ -161,7 +165,7 @@ func (bs BookingService) getText(id string) (string, error) {
 	return text, nil
 }
 
-func (bs BookingService) Available(start time.Time, end time.Time) ([]string, error) {
+func (bs BookingService) Available(start time.Time, end time.Time) ([]booking.Room, error) {
 	date := start.Format("20060102")
 	dates := fmt.Sprintf("%s-%s", date, date)
 
@@ -172,10 +176,13 @@ func (bs BookingService) Available(start time.Time, end time.Time) ([]string, er
 	if err != nil {
 		return nil, err
 	}
-	var result []string
+	var result []booking.Room
 
 	for _, room := range rooms {
-		result = append(result, room.Name)
+		result = append(result, booking.Room{
+			Provider: providerName,
+			Id:       room.Name,
+		})
 	}
 	return result, nil
 }
