@@ -3,7 +3,6 @@ package cli
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/jsipprell/keyctl"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh/terminal"
 	"os"
@@ -15,9 +14,8 @@ const KeyringName = ApplicationName + "-password"
 
 func getPassword() string {
 	var password string
-	keyring, err := keyctl.SessionKeyring()
 
-	if err != nil {
+	if !hasKeyRingSupport() {
 		if viper.GetString("chalmers.pass") == "" {
 			fmt.Println("No password set in config. You can set it with 'bgc config set pass'")
 		}
@@ -35,8 +33,8 @@ func getPassword() string {
 			password = string(bytes)
 		}
 	} else {
-		key, err := keyring.Search(KeyringName)
-		notSaved := err != nil && err.Error() == "required key not available"
+		key, err := getKeyRingPassword(KeyringName)
+		notSaved := err != nil && err.Error() == "not saved"
 		if notSaved {
 			fmt.Println("No password set. You can set it securely with 'bgc config set pass'")
 		}
@@ -48,13 +46,7 @@ func getPassword() string {
 		if err != nil || BgcCmd.Flag("cid").Value.String() != "" {
 			password = promptForPassword()
 		} else {
-			bytes, err := key.Get()
-			if err != nil {
-				fmt.Printf("Failed to read password: %s\n", err.Error())
-				fmt.Printf("Try to reset or unset your password with 'gbc config set pass'\n")
-				os.Exit(1)
-			}
-			password = string(bytes)
+			password = key
 		}
 	}
 	return password
@@ -72,12 +64,10 @@ func promptForPassword() string {
 }
 
 func getSavePassword() func(string) error {
-	keyring, err := keyctl.SessionKeyring()
-	if err != nil {
+	if !hasKeyRingSupport() {
 		return nil
 	}
 	return func(password string) error {
-		_, err := keyring.Add(KeyringName, []byte(password))
-		return err
+		return saveKeyRingPassword(KeyringName, password)
 	}
 }
