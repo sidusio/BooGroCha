@@ -12,6 +12,43 @@ import (
 	fmtLog "sidus.io/boogrocha/internal/log/fmt"
 )
 
+const (
+	providerA = "providerA"
+	providerB = "providerB"
+	providerC = "providerC"
+	providerX = "providerX"
+	roomA     = "roomA"
+	roomB     = "roomB"
+	roomC     = "roomC"
+)
+
+var (
+	roomAA = booking.Room{
+		Provider: providerA,
+		Id:       roomA,
+	}
+	roomAB = booking.Room{
+		Provider: providerA,
+		Id:       roomB,
+	}
+	roomAC = booking.Room{
+		Provider: providerA,
+		Id:       roomC,
+	}
+	roomCA = booking.Room{
+		Provider: providerC,
+		Id:       roomA,
+	}
+	roomCB = booking.Room{
+		Provider: providerC,
+		Id:       roomB,
+	}
+	roomXA = booking.Room{
+		Provider: providerX,
+		Id:       roomA,
+	}
+)
+
 func TestBookingService_Book(t *testing.T) {
 	type fields struct {
 		services map[string]booking.BookingService
@@ -20,15 +57,17 @@ func TestBookingService_Book(t *testing.T) {
 	type args struct {
 		booking booking.Booking
 	}
-	tests := []struct {
+	var tests = []struct {
 		name    string
 		fields  fields
 		args    args
 		wantErr bool
 	}{
 		{
-			name:   "no services",
-			fields: fields{},
+			name: "no services",
+			fields: fields{
+				log: &fmtLog.Logger{},
+			},
 			args: args{
 				booking: booking.Booking{},
 			},
@@ -38,15 +77,17 @@ func TestBookingService_Book(t *testing.T) {
 			name: "only failing services",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": &booking.MockErrorService{},
-					"serviceB": &booking.MockErrorService{},
+					providerA: &booking.MockErrorService{},
+					providerB: &booking.MockErrorService{},
 				},
 				log: &fmtLog.Logger{},
 			},
 			args: args{
 				booking: booking.Booking{
-					Room: "serviceA/room1",
-					Id:   "serviceA/room1",
+					Room: booking.Room{
+						Provider: providerA,
+						Id:       roomA,
+					},
 				},
 			},
 			wantErr: true,
@@ -55,16 +96,40 @@ func TestBookingService_Book(t *testing.T) {
 			name: "invalid prefix",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": booking.NewMockService([]string{"room1", "room2", "room3"}),
-					"serviceB": &booking.MockErrorService{},
-					"serviceC": booking.NewMockService([]string{"room1", "room2"}),
+					providerA: booking.NewMockService([]booking.Room{
+						{
+							Provider: providerA,
+							Id:       roomA,
+						},
+						{
+							Provider: providerA,
+							Id:       roomB,
+						},
+						{
+							Provider: providerA,
+							Id:       roomC,
+						},
+					}),
+					providerB: &booking.MockErrorService{},
+					providerC: booking.NewMockService([]booking.Room{
+						{
+							Provider: providerC,
+							Id:       roomA,
+						},
+						{
+							Provider: providerC,
+							Id:       roomB,
+						},
+					}),
 				},
 				log: &fmtLog.Logger{},
 			},
 			args: args{
 				booking: booking.Booking{
-					Room: "serviceX/room1",
-					Id:   "serviceX/room1",
+					Room: booking.Room{
+						Provider: providerX,
+						Id:       roomA,
+					},
 				},
 			},
 			wantErr: true,
@@ -73,20 +138,27 @@ func TestBookingService_Book(t *testing.T) {
 			name: "already booked",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": &booking.MockService{Bookings: map[string]*booking.Booking{
-						"room1": {
-							Room: "room1",
-							Id:   "room1",
-						}}, Rooms: []string{"room1", "room2", "room3"}},
-					"serviceB": &booking.MockErrorService{},
-					"serviceC": booking.NewMockService([]string{"room1", "room2"}),
+					providerA: &booking.MockService{
+						Bookings: map[booking.Room]*booking.Booking{
+							roomAA: {
+								Room: roomAA,
+							},
+						},
+						Rooms: []booking.Room{
+							roomAA,
+							roomAB,
+							roomAC,
+						}},
+					providerB: &booking.MockErrorService{},
+					providerC: booking.NewMockService([]booking.Room{
+						roomCA, roomCB,
+					}),
 				},
 				log: &fmtLog.Logger{},
 			},
 			args: args{
 				booking: booking.Booking{
-					Room: "serviceA/room1",
-					Id:   "serviceA/room1",
+					Room: roomAA,
 				},
 			},
 			wantErr: true,
@@ -95,16 +167,15 @@ func TestBookingService_Book(t *testing.T) {
 			name: "successfully book",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": booking.NewMockService([]string{"room1", "room2", "room3"}),
-					"serviceB": &booking.MockErrorService{},
-					"serviceC": booking.NewMockService([]string{"room1", "room2"}),
+					providerA: booking.NewMockService([]booking.Room{roomAA, roomAB, roomAC}),
+					providerB: &booking.MockErrorService{},
+					providerC: booking.NewMockService([]booking.Room{roomCA, roomCB}),
 				},
 				log: &fmtLog.Logger{},
 			},
 			args: args{
 				booking: booking.Booking{
-					Room: "serviceA/room1",
-					Id:   "serviceA/room1",
+					Room: roomAA,
 				},
 			},
 			wantErr: false,
@@ -113,8 +184,8 @@ func TestBookingService_Book(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bs := BookingService{
-				services: tt.fields.services,
-				log:      tt.fields.log,
+				providers: tt.fields.services,
+				log:       tt.fields.log,
 			}
 			if err := bs.Book(tt.args.booking); (err != nil) != tt.wantErr {
 				t.Errorf("BookingService.Book() error = %v, wantErr %v", err, tt.wantErr)
@@ -151,15 +222,14 @@ func TestBookingService_UnBook(t *testing.T) {
 			name: "only failing services",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": &booking.MockErrorService{},
-					"serviceB": &booking.MockErrorService{},
+					providerA: &booking.MockErrorService{},
+					providerB: &booking.MockErrorService{},
 				},
 				log: &fmtLog.Logger{},
 			},
 			args: args{
 				booking: booking.Booking{
-					Room: "serviceA/room1",
-					Id:   "serviceA/room1",
+					Room: roomAA,
 				},
 			},
 			wantErr: true,
@@ -168,16 +238,15 @@ func TestBookingService_UnBook(t *testing.T) {
 			name: "invalid prefix",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": booking.NewMockService([]string{"room1", "room2", "room3"}),
-					"serviceB": &booking.MockErrorService{},
-					"serviceC": booking.NewMockService([]string{"room1", "room2"}),
+					providerA: booking.NewMockService([]booking.Room{roomAA, roomAB, roomAC}),
+					providerB: &booking.MockErrorService{},
+					providerC: booking.NewMockService([]booking.Room{roomCA, roomCB}),
 				},
 				log: &fmtLog.Logger{},
 			},
 			args: args{
 				booking: booking.Booking{
-					Room: "serviceX/room1",
-					Id:   "serviceX/room1",
+					Room: roomXA,
 				},
 			},
 			wantErr: true,
@@ -186,20 +255,24 @@ func TestBookingService_UnBook(t *testing.T) {
 			name: "successfully unbook",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": &booking.MockService{Bookings: map[string]*booking.Booking{
-						"room1": {
-							Room: "room1",
-							Id:   "room1",
-						}}, Rooms: []string{"room1", "room2", "room3"}},
-					"serviceB": &booking.MockErrorService{},
-					"serviceC": booking.NewMockService([]string{"room1", "room2"}),
+					providerA: &booking.MockService{Bookings: map[booking.Room]*booking.Booking{
+						roomAA: {
+							Room: roomAA,
+						}},
+						Rooms: []booking.Room{
+							roomAA,
+							roomAB,
+							roomAC,
+						},
+					},
+					providerB: &booking.MockErrorService{},
+					providerC: booking.NewMockService([]booking.Room{roomCA, roomCB}),
 				},
 				log: &fmtLog.Logger{},
 			},
 			args: args{
 				booking: booking.Booking{
-					Room: "serviceA/room1",
-					Id:   "serviceA/room1",
+					Room: roomAA,
 				},
 			},
 			wantErr: false,
@@ -208,16 +281,15 @@ func TestBookingService_UnBook(t *testing.T) {
 			name: "not booked",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": booking.NewMockService([]string{"room1", "room2", "room3"}),
-					"serviceB": &booking.MockErrorService{},
-					"serviceC": booking.NewMockService([]string{"room1", "room2"}),
+					providerA: booking.NewMockService([]booking.Room{roomAA, roomAB, roomAC}),
+					providerB: &booking.MockErrorService{},
+					providerC: booking.NewMockService([]booking.Room{roomCA, roomCB}),
 				},
 				log: &fmtLog.Logger{},
 			},
 			args: args{
 				booking: booking.Booking{
-					Room: "serviceA/room1",
-					Id:   "serviceA/room1",
+					Room: roomAA,
 				},
 			},
 			wantErr: true,
@@ -226,8 +298,8 @@ func TestBookingService_UnBook(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b := BookingService{
-				services: tt.fields.services,
-				log:      tt.fields.log,
+				providers: tt.fields.services,
+				log:       tt.fields.log,
 			}
 			if err := b.UnBook(tt.args.booking); (err != nil) != tt.wantErr {
 				t.Errorf("BookingService.UnBook() error = %v, wantErr %v", err, tt.wantErr)
@@ -259,8 +331,8 @@ func TestBookingService_MyBookings(t *testing.T) {
 			name: "only failing services",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": &booking.MockErrorService{},
-					"serviceB": &booking.MockErrorService{},
+					providerA: &booking.MockErrorService{},
+					providerB: &booking.MockErrorService{},
 				},
 				log: &fmtLog.Logger{},
 			},
@@ -271,29 +343,24 @@ func TestBookingService_MyBookings(t *testing.T) {
 			name: "some failing services",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": booking.NewMockStaticService([]booking.Booking{
+					providerA: booking.NewMockStaticService([]booking.Booking{
 						{
-							Room: "room1",
-							Id:   "room1",
+							Room: roomAA,
 						},
 						{
-							Room: "room2",
-							Id:   "room2",
+							Room: roomAB,
 						},
 						{
-							Room: "room3",
-							Id:   "room3",
+							Room: roomAC,
 						},
 					}, nil),
-					"serviceB": &booking.MockErrorService{},
-					"serviceC": booking.NewMockStaticService([]booking.Booking{
+					providerB: &booking.MockErrorService{},
+					providerC: booking.NewMockStaticService([]booking.Booking{
 						{
-							Room: "room1",
-							Id:   "room1",
+							Room: roomCA,
 						},
 						{
-							Room: "room2",
-							Id:   "room2",
+							Room: roomCB,
 						},
 					}, nil),
 				},
@@ -301,24 +368,19 @@ func TestBookingService_MyBookings(t *testing.T) {
 			},
 			want: []booking.Booking{
 				{
-					Room: "serviceA/room1",
-					Id:   "serviceA/room1",
+					Room: roomAA,
 				},
 				{
-					Room: "serviceA/room2",
-					Id:   "serviceA/room2",
+					Room: roomAB,
 				},
 				{
-					Room: "serviceA/room3",
-					Id:   "serviceA/room3",
+					Room: roomAC,
 				},
 				{
-					Room: "serviceC/room1",
-					Id:   "serviceC/room1",
+					Room: roomCA,
 				},
 				{
-					Room: "serviceC/room2",
-					Id:   "serviceC/room2",
+					Room: roomCB,
 				},
 			},
 			wantErr: false,
@@ -327,8 +389,8 @@ func TestBookingService_MyBookings(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b := BookingService{
-				services: tt.fields.services,
-				log:      tt.fields.log,
+				providers: tt.fields.services,
+				log:       tt.fields.log,
 			}
 			got, err := b.MyBookings()
 			if (err != nil) != tt.wantErr {
@@ -337,11 +399,17 @@ func TestBookingService_MyBookings(t *testing.T) {
 			}
 
 			sort.Slice(got, func(i, j int) bool {
-				return got[i].Id < got[j].Id
+				if got[i].Room.Provider == got[j].Room.Provider {
+					return got[i].Id < got[j].Id
+				}
+				return got[i].Room.Provider < got[j].Room.Provider
 			})
 
 			sort.Slice(tt.want, func(i, j int) bool {
-				return tt.want[i].Id < tt.want[j].Id
+				if tt.want[i].Room.Provider == tt.want[j].Room.Provider {
+					return tt.want[i].Id < tt.want[j].Id
+				}
+				return tt.want[i].Room.Provider < tt.want[j].Room.Provider
 			})
 
 			if !reflect.DeepEqual(got, tt.want) {
@@ -356,9 +424,9 @@ func TestBookingService_myBookings(t *testing.T) {
 	services := make(map[string]booking.BookingService)
 	nErrors := 0
 	for i := 3; i >= 0; i-- {
-		serviceName := fmt.Sprintf("service%d", i)
+		providerName := fmt.Sprintf("service%d", i)
 		if i%7 == 0 {
-			services[serviceName] = &booking.MockErrorService{}
+			services[providerName] = &booking.MockErrorService{}
 			nErrors += 1
 		} else {
 			var bookings []booking.Booking
@@ -366,15 +434,21 @@ func TestBookingService_myBookings(t *testing.T) {
 				roomName := fmt.Sprintf("room%d", j)
 				id := fmt.Sprintf("%d", j)
 				bookings = append(bookings, booking.Booking{
-					Room: roomName,
-					Id:   id,
+					Room: booking.Room{
+						Provider: providerName,
+						Id:       roomName,
+					},
+					Id: fmt.Sprintf(prefixFormat, providerName, id),
 				})
 				result = append(result, booking.Booking{
-					Room: fmt.Sprintf(prefixFormat, serviceName, roomName),
-					Id:   fmt.Sprintf(prefixFormat, serviceName, id),
+					Room: booking.Room{
+						Provider: providerName,
+						Id:       roomName,
+					},
+					Id: fmt.Sprintf(prefixFormat, providerName, id),
 				})
 			}
-			services[serviceName] = booking.NewMockStaticService(bookings, nil)
+			services[providerName] = booking.NewMockStaticService(bookings, nil)
 		}
 	}
 
@@ -394,8 +468,6 @@ func TestBookingService_myBookings(t *testing.T) {
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Id < result[j].Id
 	})
-	//sort.Strings(bookings)
-	//sort.Strings(result)
 
 	if !reflect.DeepEqual(bookings, result) {
 		t.Errorf("BookingService.myBookings() = %v, wantBookings %v", bookings, result)
@@ -415,7 +487,7 @@ func TestBookingService_Available(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    []string
+		want    []booking.Room
 		wantErr bool
 	}{
 		{
@@ -431,8 +503,8 @@ func TestBookingService_Available(t *testing.T) {
 			name: "only failing services",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": &booking.MockErrorService{},
-					"serviceB": &booking.MockErrorService{},
+					providerA: &booking.MockErrorService{},
+					providerB: &booking.MockErrorService{},
 				},
 				log: &fmtLog.Logger{},
 			},
@@ -444,9 +516,9 @@ func TestBookingService_Available(t *testing.T) {
 			name: "some failing services",
 			fields: fields{
 				services: map[string]booking.BookingService{
-					"serviceA": booking.NewMockStaticService(nil, []string{"room1"}),
-					"serviceB": &booking.MockErrorService{},
-					"serviceC": booking.NewMockStaticService(nil, []string{"room1", "room2"}),
+					providerA: booking.NewMockStaticService(nil, []booking.Room{roomAA}),
+					providerB: &booking.MockErrorService{},
+					providerC: booking.NewMockStaticService(nil, []booking.Room{roomCA, roomCB}),
 				},
 				log: &fmtLog.Logger{},
 			},
@@ -454,22 +526,27 @@ func TestBookingService_Available(t *testing.T) {
 				start: time.Time{},
 				end:   time.Time{},
 			},
-			want:    []string{"serviceA/room1", "serviceC/room1", "serviceC/room2"},
+			want:    []booking.Room{roomAA, roomCA, roomCB},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bs := &BookingService{
-				services: tt.fields.services,
-				log:      tt.fields.log,
+				providers: tt.fields.services,
+				log:       tt.fields.log,
 			}
 			got, err := bs.Available(tt.args.start, tt.args.end)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("BookingService.Available() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			sort.Strings(got)
+			sort.Slice(got, func(i, j int) bool {
+				if got[i].Provider == got[j].Provider {
+					return got[i].Id < got[j].Id
+				}
+				return got[i].Provider < got[j].Provider
+			})
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("BookingService.Available() = %v, wantRooms %v", got, tt.want)
 			}
@@ -478,22 +555,26 @@ func TestBookingService_Available(t *testing.T) {
 }
 
 func TestBookingService_available(t *testing.T) {
-	var result []string
+	var result []booking.Room
 	services := make(map[string]booking.BookingService)
 	nErrors := 0
 	for i := 100; i >= 0; i-- {
-		serviceName := fmt.Sprintf("service%d", i)
+		providerName := fmt.Sprintf("service%d", i)
 		if i%7 == 0 {
-			services[serviceName] = &booking.MockErrorService{}
+			services[providerName] = &booking.MockErrorService{}
 			nErrors += 1
 		} else {
-			var rooms []string
+			var rooms []booking.Room
 			for j := i % 20; j >= 0; j-- {
 				roomName := fmt.Sprintf("room%d", j)
-				rooms = append(rooms, roomName)
-				result = append(result, fmt.Sprintf(prefixFormat, serviceName, roomName))
+				room := booking.Room{
+					Provider: providerName,
+					Id:       roomName,
+				}
+				rooms = append(rooms, room)
+				result = append(result, room)
 			}
-			services[serviceName] = booking.NewMockStaticService(nil, rooms)
+			services[providerName] = booking.NewMockStaticService(nil, rooms)
 		}
 	}
 
@@ -506,124 +587,21 @@ func TestBookingService_available(t *testing.T) {
 		return
 	}
 
-	sort.Strings(rooms)
-	sort.Strings(result)
+	sort.Slice(rooms, func(i, j int) bool {
+		if rooms[i].Provider == rooms[j].Provider {
+			return rooms[i].Id < rooms[j].Id
+		}
+		return rooms[i].Provider < rooms[j].Provider
+	})
+
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Provider == result[j].Provider {
+			return result[i].Id < result[j].Id
+		}
+		return result[i].Provider < result[j].Provider
+	})
 
 	if !reflect.DeepEqual(rooms, result) {
 		t.Errorf("BookingService.available() = %v, wantRooms %v", rooms, result)
-	}
-}
-
-func Test_wrapBooking(t *testing.T) {
-	type args struct {
-		serviceName string
-		b           booking.Booking
-	}
-	tests := []struct {
-		name string
-		args args
-		want booking.Booking
-	}{
-		{
-			name: "wraps booking",
-			args: args{
-				serviceName: "serviceA",
-				b: booking.Booking{
-					Room: "room1",
-					Id:   "room1",
-				},
-			},
-			want: booking.Booking{
-				Room: "serviceA/room1",
-				Id:   "serviceA/room1",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := wrapBooking(tt.args.serviceName, tt.args.b); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("wrapBooking() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_unwrapBooking(t *testing.T) {
-	type args struct {
-		b booking.Booking
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		want1   booking.Booking
-		wantErr bool
-	}{
-		{
-			name: "room has wrong format",
-			args: args{
-				b: booking.Booking{
-					Room: "room1",
-					Id:   "serviceA/room1",
-				},
-			},
-			want:    "",
-			want1:   booking.Booking{},
-			wantErr: true,
-		},
-		{
-			name: "id has wrong format",
-			args: args{
-				b: booking.Booking{
-					Room: "serviceA/room1",
-					Id:   "room1",
-				},
-			},
-			want:    "",
-			want1:   booking.Booking{},
-			wantErr: true,
-		},
-		{
-			name: "different services for room and id",
-			args: args{
-				b: booking.Booking{
-					Room: "serviceA/room1",
-					Id:   "serviceB/room1",
-				},
-			},
-			want:    "",
-			want1:   booking.Booking{},
-			wantErr: true,
-		},
-		{
-			name: "",
-			args: args{
-				b: booking.Booking{
-					Room: "serviceA/room1",
-					Id:   "serviceA/room1",
-				},
-			},
-			want: "serviceA",
-			want1: booking.Booking{
-				Room: "room1",
-				Id:   "room1",
-			},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := unwrapBooking(tt.args.b)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("unwrapBooking() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("unwrapBooking() got = %v, want %v", got, tt.want)
-			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("unwrapBooking() got1 = %v, want %v", got1, tt.want1)
-			}
-		})
 	}
 }

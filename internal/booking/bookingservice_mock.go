@@ -19,16 +19,16 @@ func (*MockErrorService) MyBookings() ([]Booking, error) {
 	return nil, fmt.Errorf("mock error")
 }
 
-func (*MockErrorService) Available(start time.Time, end time.Time) ([]string, error) {
+func (*MockErrorService) Available(start time.Time, end time.Time) ([]Room, error) {
 	return nil, fmt.Errorf("mock error")
 }
 
 type MockStaticService struct {
 	bookings []Booking
-	rooms    []string
+	rooms    []Room
 }
 
-func NewMockStaticService(bookings []Booking, rooms []string) *MockStaticService {
+func NewMockStaticService(bookings []Booking, rooms []Room) *MockStaticService {
 	return &MockStaticService{bookings: bookings, rooms: rooms}
 }
 
@@ -44,17 +44,17 @@ func (ms *MockStaticService) MyBookings() ([]Booking, error) {
 	return ms.bookings, nil
 }
 
-func (ms *MockStaticService) Available(start time.Time, end time.Time) ([]string, error) {
+func (ms *MockStaticService) Available(start time.Time, end time.Time) ([]Room, error) {
 	return ms.rooms, nil
 }
 
 type MockService struct {
-	Bookings map[string]*Booking
-	Rooms    []string
+	Bookings map[Room]*Booking
+	Rooms    []Room
 }
 
-func NewMockService(rooms []string) *MockService {
-	return &MockService{Bookings: make(map[string]*Booking), Rooms: rooms}
+func NewMockService(rooms []Room) *MockService {
+	return &MockService{Bookings: make(map[Room]*Booking), Rooms: rooms}
 }
 
 func (bs *MockService) Book(b Booking) error {
@@ -83,8 +83,8 @@ func (bs *MockService) MyBookings() ([]Booking, error) {
 	return bookings, nil
 }
 
-func (bs *MockService) Available(start time.Time, end time.Time) ([]string, error) {
-	var available []string
+func (bs *MockService) Available(start time.Time, end time.Time) ([]Room, error) {
+	var available []Room
 	for _, room := range bs.Rooms {
 		if bs.Bookings[room] == nil {
 			available = append(available, room)

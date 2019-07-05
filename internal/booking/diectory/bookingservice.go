@@ -3,7 +3,6 @@ package diectory
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -17,16 +16,16 @@ const (
 )
 
 type BookingService struct {
-	services map[string]booking.BookingService
-	log      log.Logger
+	providers map[string]booking.BookingService
+	log       log.Logger
 }
 
 func NewBookingService(services map[string]booking.BookingService, log log.Logger) *BookingService {
-	return &BookingService{services: services, log: log}
+	return &BookingService{providers: services, log: log}
 }
 
 type availableResult struct {
-	available []string
+	available []booking.Room
 	err       *serviceError
 }
 
@@ -44,42 +43,36 @@ func (e *serviceError) Error() string {
 	return fmt.Sprintf("couldn't get available rooms from provider %s: %e", e.serviceName, e.err)
 }
 
-func (bs *BookingService) Book(booking booking.Booking) error {
-	if len(bs.services) == 0 {
-		return errors.New(ErrNoServices)
+func (bs *BookingService) Book(b booking.Booking) error {
+	if len(bs.providers) == 0 {
+		err := errors.New(ErrNoServices)
+		bs.log.Error(err)
+		return err
 	}
 
-	serviceName, b, err := unwrapBooking(booking)
-	if err != nil {
-		return fmt.Errorf("couldn't book booking %v: %e", booking, err)
+	p := b.Room.Provider
+	if bs.providers[p] == nil {
+		return fmt.Errorf("booking service not found: %s", p)
 	}
 
-	if bs.services[serviceName] == nil {
-		return fmt.Errorf("booking service not found: %s", serviceName)
-	}
-
-	return bs.services[serviceName].Book(b)
+	return bs.providers[p].Book(b)
 }
 
-func (bs *BookingService) UnBook(booking booking.Booking) error {
-	if len(bs.services) == 0 {
+func (bs *BookingService) UnBook(b booking.Booking) error {
+	if len(bs.providers) == 0 {
 		return errors.New(ErrNoServices)
 	}
 
-	serviceName, b, err := unwrapBooking(booking)
-	if err != nil {
-		return fmt.Errorf("couldn't book booking %v: %e", booking, err)
+	p := b.Room.Provider
+	if bs.providers[p] == nil {
+		return fmt.Errorf("booking provider not found: %s", p)
 	}
 
-	if bs.services[serviceName] == nil {
-		return fmt.Errorf("booking service not found: %s", serviceName)
-	}
-
-	return bs.services[serviceName].UnBook(b)
+	return bs.providers[p].UnBook(b)
 }
 
 func (bs *BookingService) MyBookings() ([]booking.Booking, error) {
-	if len(bs.services) == 0 {
+	if len(bs.providers) == 0 {
 		return nil, errors.New(ErrNoServices)
 	}
 
@@ -88,7 +81,7 @@ func (bs *BookingService) MyBookings() ([]booking.Booking, error) {
 		bs.log.Error(err)
 	}
 
-	if len(errs) == len(bs.services) {
+	if len(errs) == len(bs.providers) {
 		return nil, errors.New(ErrAllServicesFailed)
 	}
 
@@ -104,10 +97,10 @@ func (bs *BookingService) myBookings() ([]booking.Booking, []*serviceError) {
 		close(incoming)
 	}()
 
-	for name, service := range bs.services {
+	for name, provider := range bs.providers {
 		wg.Add(1)
-		go func(name string, service booking.BookingService) {
-			bookings, err := service.MyBookings()
+		go func(name string, provider booking.BookingService) {
+			bookings, err := provider.MyBookings()
 			if err != nil {
 				incoming <- myBookingsResult{
 					bookings: nil,
@@ -118,14 +111,11 @@ func (bs *BookingService) myBookings() ([]booking.Booking, []*serviceError) {
 				}
 				return
 			}
-			for i, b := range bookings {
-				bookings[i] = wrapBooking(name, b)
-			}
 			incoming <- myBookingsResult{
 				bookings: bookings,
 				err:      nil,
 			}
-		}(name, service)
+		}(name, provider)
 	}
 
 	var bookings []booking.Booking
@@ -140,8 +130,8 @@ func (bs *BookingService) myBookings() ([]booking.Booking, []*serviceError) {
 	return bookings, errors
 }
 
-func (bs *BookingService) Available(start time.Time, end time.Time) ([]string, error) {
-	if len(bs.services) == 0 {
+func (bs *BookingService) Available(start time.Time, end time.Time) ([]booking.Room, error) {
+	if len(bs.providers) == 0 {
 		return nil, errors.New(ErrNoServices)
 	}
 
@@ -150,14 +140,14 @@ func (bs *BookingService) Available(start time.Time, end time.Time) ([]string, e
 		bs.log.Error(err)
 	}
 
-	if len(errs) == len(bs.services) {
+	if len(errs) == len(bs.providers) {
 		return nil, errors.New(ErrAllServicesFailed)
 	}
 
 	return rooms, nil
 }
 
-func (bs *BookingService) available(start time.Time, end time.Time) ([]string, []*serviceError) {
+func (bs *BookingService) available(start time.Time, end time.Time) ([]booking.Room, []*serviceError) {
 	incoming := make(chan availableResult)
 
 	wg := sync.WaitGroup{}
@@ -166,10 +156,10 @@ func (bs *BookingService) available(start time.Time, end time.Time) ([]string, [
 		close(incoming)
 	}()
 
-	for name, service := range bs.services {
+	for name, provider := range bs.providers {
 		wg.Add(1)
-		go func(name string, service booking.BookingService) {
-			a, err := service.Available(start, end)
+		go func(name string, provider booking.BookingService) {
+			a, err := provider.Available(start, end)
 			if err != nil {
 				incoming <- availableResult{
 					available: nil,
@@ -180,17 +170,14 @@ func (bs *BookingService) available(start time.Time, end time.Time) ([]string, [
 				}
 				return
 			}
-			for i, room := range a {
-				a[i] = fmt.Sprintf(prefixFormat, name, room)
-			}
 			incoming <- availableResult{
 				available: a,
 				err:       nil,
 			}
-		}(name, service)
+		}(name, provider)
 	}
 
-	var rooms []string
+	var rooms []booking.Room
 	var errors []*serviceError
 	for result := range incoming {
 		wg.Done()
@@ -200,41 +187,4 @@ func (bs *BookingService) available(start time.Time, end time.Time) ([]string, [
 		rooms = append(rooms, result.available...)
 	}
 	return rooms, errors
-}
-
-func wrapBooking(serviceName string, b booking.Booking) booking.Booking {
-	return booking.Booking{
-		Room:  fmt.Sprintf(prefixFormat, serviceName, b.Room),
-		Start: b.Start,
-		End:   b.End,
-		Text:  b.Text,
-		Id:    fmt.Sprintf(prefixFormat, serviceName, b.Id),
-	}
-}
-
-func unwrapBooking(b booking.Booking) (string, booking.Booking, error) {
-	parts := strings.Split(b.Room, "/")
-	if len(parts) == 1 {
-		return "", booking.Booking{}, fmt.Errorf("booking not formatted correctly")
-	}
-	room := parts[1]
-	serviceName := parts[0]
-
-	parts = strings.Split(b.Id, "/")
-	if len(parts) == 1 {
-		return "", booking.Booking{}, fmt.Errorf("booking not formatted correctly")
-	}
-	id := parts[1]
-
-	if serviceName != parts[0] {
-		return "", booking.Booking{}, fmt.Errorf("booking not formatted correctly")
-	}
-
-	return serviceName, booking.Booking{
-		Room:  room,
-		Start: b.Start,
-		End:   b.End,
-		Text:  b.Text,
-		Id:    id,
-	}, nil
 }
