@@ -1,7 +1,6 @@
 package diectory
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -45,7 +44,7 @@ func (e *serviceError) Error() string {
 
 func (bs *BookingService) Book(b booking.Booking) error {
 	if len(bs.providers) == 0 {
-		err := errors.New(ErrNoServices)
+		err := ErrNoServices
 		bs.log.Error(err)
 		return err
 	}
@@ -60,7 +59,7 @@ func (bs *BookingService) Book(b booking.Booking) error {
 
 func (bs *BookingService) UnBook(b booking.Booking) error {
 	if len(bs.providers) == 0 {
-		return errors.New(ErrNoServices)
+		return ErrNoServices
 	}
 
 	p := b.Room.Provider
@@ -73,7 +72,7 @@ func (bs *BookingService) UnBook(b booking.Booking) error {
 
 func (bs *BookingService) MyBookings() ([]booking.Booking, error) {
 	if len(bs.providers) == 0 {
-		return nil, errors.New(ErrNoServices)
+		return nil, ErrNoServices
 	}
 
 	rooms, errs := bs.myBookings()
@@ -82,7 +81,7 @@ func (bs *BookingService) MyBookings() ([]booking.Booking, error) {
 	}
 
 	if len(errs) == len(bs.providers) {
-		return nil, errors.New(ErrAllServicesFailed)
+		return nil, ErrAllServicesFailed
 	}
 
 	return rooms, nil
@@ -132,7 +131,7 @@ func (bs *BookingService) myBookings() ([]booking.Booking, []*serviceError) {
 
 func (bs *BookingService) Available(start time.Time, end time.Time) ([]booking.Room, error) {
 	if len(bs.providers) == 0 {
-		return nil, errors.New(ErrNoServices)
+		return nil, ErrNoServices
 	}
 
 	rooms, errs := bs.available(start, end)
@@ -141,7 +140,7 @@ func (bs *BookingService) Available(start time.Time, end time.Time) ([]booking.R
 	}
 
 	if len(errs) == len(bs.providers) {
-		return nil, errors.New(ErrAllServicesFailed)
+		return nil, ErrAllServicesFailed
 	}
 
 	return rooms, nil
