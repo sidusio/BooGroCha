@@ -39,13 +39,13 @@ type serviceError struct {
 }
 
 func (e *serviceError) Error() string {
-	return fmt.Sprintf("couldn't get available rooms from provider %s: %e", e.serviceName, e.err)
+	return fmt.Sprintf("couldn't get available rooms from provider %s: %s", e.serviceName, e.err.Error())
 }
 
 func (bs *BookingService) Book(b booking.Booking) error {
 	if len(bs.providers) == 0 {
 		err := ErrNoServices
-		bs.log.Error(err)
+		bs.log.Error(err.Error())
 		return err
 	}
 
@@ -77,7 +77,7 @@ func (bs *BookingService) MyBookings() ([]booking.Booking, error) {
 
 	rooms, errs := bs.myBookings()
 	for _, err := range errs {
-		bs.log.Error(err)
+		bs.log.Error(err.Error())
 	}
 
 	if len(errs) == len(bs.providers) {
@@ -136,7 +136,7 @@ func (bs *BookingService) Available(start time.Time, end time.Time) ([]booking.R
 
 	rooms, errs := bs.available(start, end)
 	for _, err := range errs {
-		bs.log.Error(err)
+		bs.log.Error(err.Error())
 	}
 
 	if len(errs) == len(bs.providers) {
