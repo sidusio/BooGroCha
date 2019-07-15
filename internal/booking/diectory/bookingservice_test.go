@@ -432,20 +432,17 @@ func TestBookingService_myBookings(t *testing.T) {
 			var bookings []booking.Booking
 			for j := i % 20; j >= 0; j-- {
 				roomName := fmt.Sprintf("room%d", j)
-				id := fmt.Sprintf("%d", j)
 				bookings = append(bookings, booking.Booking{
 					Room: booking.Room{
 						Provider: providerName,
 						Id:       roomName,
 					},
-					Id: fmt.Sprintf(prefixFormat, providerName, id),
 				})
 				result = append(result, booking.Booking{
 					Room: booking.Room{
 						Provider: providerName,
 						Id:       roomName,
 					},
-					Id: fmt.Sprintf(prefixFormat, providerName, id),
 				})
 			}
 			services[providerName] = booking.NewMockStaticService(bookings, nil)

@@ -10,10 +10,6 @@ import (
 	"sidus.io/boogrocha/internal/booking"
 )
 
-const (
-	prefixFormat = "%s/%s"
-)
-
 type BookingService struct {
 	providers map[string]booking.BookingService
 	log       log.Logger
