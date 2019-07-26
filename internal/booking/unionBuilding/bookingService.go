@@ -1,8 +1,16 @@
 package unionBuilding
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/publicsuffix"
 
 	"sidus.io/boogrocha/internal/booking"
 )
@@ -11,6 +19,20 @@ const (
 	bookURLFormat   = "http://aptus.chs.chalmers.se/AptusPortal/wwwashcommand.aspx?command=book&PanelId=3655&TypeId=18313&GroupId=%d&Date=%s&IntervalId=%d&NextPage"
 	listURLFormat   = "http://aptus.chs.chalmers.se/AptusPortal/wwwashbookings.aspx?panelId=3655&weekoffset=%d&type=%d&group=%d&date=%s"
 	cancelURLFormat = "http://aptus.chs.chalmers.se/AptusPortal/wwwashcommand.aspx?command=cancel&PanelId=3655&TypeId=%d&GroupId=%d&Date=%s&IntervalId=%d&NextPage"
+
+	loginURLPOST = "http://aptus.chs.chalmers.se/AptusPortal/login.aspx?ReturnUrl=%2FAptusPortal%2Findex.aspx"
+	loginURL     = "http://aptus.chs.chalmers.se/AptusPortal/"
+
+	// Login form keys
+	lastFocusKey          = "__LASTFOCUS"
+	eventTargetKey        = "__EVENTTARGET"
+	eventArgumentKey      = "__EVENTARGUMENT"
+	viewStateKey          = "__VIEWSTATE"
+	viewStateGeneratorKey = "__VIEWSTATEGENERATOR"
+	eventValidationKey    = "__EVENTVALIDATION"
+	loginUsernameKey      = "LoginPortal$UserName"
+	loginPasswordKey      = "LoginPortal$Password"
+	loginButtonKey        = "LoginPortal$LoginButton"
 )
 
 /*
@@ -52,11 +74,83 @@ type TypeID int
 
 type BookingService struct {
 	client *http.Client
-	rooms  rooms
 }
 
-func NewBookingService(personalIDNumber, pass string) *BookingService {
-	panic("implement me")
+func NewBookingService(pid, pass string) (BookingService, error) {
+	// Setup http client with a cookie jar
+	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	if err != nil {
+		return BookingService{}, err
+	}
+	client := &http.Client{
+		Jar: jar,
+	}
+
+	// Collect the form data required for login
+	values, err := loginForm(client)
+	if err != nil {
+		return BookingService{}, err
+	}
+
+	// Add credentials
+	values[loginUsernameKey] = []string{pid}
+	values[loginPasswordKey] = []string{pass}
+
+	// Login
+	_, err = client.PostForm(loginURLPOST, values)
+	if err != nil {
+		return BookingService{}, err
+	}
+
+	loginurl, err := url.Parse(loginURL)
+	fmt.Println(client.Jar.Cookies(loginurl))
+
+	return BookingService{
+		client: client,
+	}, nil
+}
+
+func loginForm(client *http.Client) (url.Values, error) {
+	resp, err := client.Get(loginURL)
+	if err != nil {
+		return nil, err
+	}
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	inputs := doc.Find("body > form > input")
+
+	values := url.Values{}
+
+	/*
+	  Traverses through each input field and extracts the name and values
+	  which is used as parameters in the login call.
+	*/
+	inputs.Each(func(i int, s *goquery.Selection) {
+		name, exists := s.Attr("name")
+		if exists {
+			value, exists := s.Attr("value")
+			if exists {
+				values.Add(name, value)
+			}
+		}
+	})
+
+	for _, key := range []string{
+		viewStateKey,
+		viewStateGeneratorKey,
+		eventValidationKey,
+	} {
+		if _, ok := values[key]; !ok {
+			return nil, errors.New(fmt.Sprintf("value not found in form: %s", key))
+		}
+	}
+	values.Add(loginButtonKey, "Enter")
+
+	return values, nil
 }
 
 func (*BookingService) Book(booking booking.Booking) error {
