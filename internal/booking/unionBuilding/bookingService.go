@@ -41,16 +41,16 @@ const (
 */
 const (
 	// Room ID:s which is passed in the query as "GroupId"
-	room1GroupID        = RoomID(40625)
-	room2GroupID        = RoomID(42943)
-	room3GroupID        = RoomID(42944)
-	exerciseHallGroupID = RoomID(40626)
-	musicRoomGroupID    = RoomID(40627)
+	room1GroupID = RoomID(40625)
+	room2GroupID = RoomID(42943)
+	room3GroupID = RoomID(42944)
+	//exerciseHallGroupID = RoomID(40626)
+	//musicRoomGroupID = RoomID(40627)
 
 	// ID for the type of rooms available for booking
-	groupRoomTypeID    = TypeID(18313)
-	musicRoomTypeID    = TypeID(18314)
-	exerciseHallTypeID = TypeID(18315)
+	groupRoomTypeID = TypeID(18313)
+	//musicRoomTypeID = TypeID(18314)
+	//exerciseHallTypeID = TypeID(18315)
 )
 
 var (
