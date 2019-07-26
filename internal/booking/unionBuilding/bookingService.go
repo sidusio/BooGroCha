@@ -26,9 +26,6 @@ const (
 	loginURL     = "http://aptus.chs.chalmers.se/AptusPortal/"
 
 	// Login form keys
-	lastFocusKey          = "__LASTFOCUS"
-	eventTargetKey        = "__EVENTTARGET"
-	eventArgumentKey      = "__EVENTARGUMENT"
 	viewStateKey          = "__VIEWSTATE"
 	viewStateGeneratorKey = "__VIEWSTATEGENERATOR"
 	eventValidationKey    = "__EVENTVALIDATION"
