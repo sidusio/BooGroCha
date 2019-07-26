@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -18,9 +17,9 @@ import (
 const (
 	providerName = "Kårhuset"
 
-	bookURLFormat   = "http://aptus.chs.chalmers.se/AptusPortal/wwwashcommand.aspx?command=book&PanelId=3655&TypeId=18313&GroupId=%d&Date=%s&IntervalId=%d&NextPage"
+	bookURLFormat   = "http://aptus.chs.chalmers.se/AptusPortal/wwwashcommand.aspx?command=book&PanelId=3655&TypeId=18313&GroupId=%s&Date=%s&IntervalId=%d&NextPage"
 	listURL         = "http://aptus.chs.chalmers.se/AptusPortal/wwwashbookings.aspx?"
-	cancelURLFormat = "http://aptus.chs.chalmers.se/AptusPortal/wwwashcommand.aspx?command=cancel&PanelId=3655&TypeId=%d&GroupId=%d&Date=%s&IntervalId=%d&NextPage"
+	cancelURLFormat = "http://aptus.chs.chalmers.se/AptusPortal/wwwashcommand.aspx?command=cancel&PanelId=3655&TypeId=18313&GroupId=%s&Date=%s&IntervalId=%d&NextPage"
 
 	loginURLPOST = "http://aptus.chs.chalmers.se/AptusPortal/login.aspx?ReturnUrl=%2FAptusPortal%2Findex.aspx"
 	loginURL     = "http://aptus.chs.chalmers.se/AptusPortal/"
@@ -40,16 +39,16 @@ const (
 */
 const (
 	// Room ID:s which is passed in the query as "GroupId"
-	room1GroupID = RoomID(40625)
-	room2GroupID = RoomID(42943)
-	room3GroupID = RoomID(42944)
-	//exerciseHallGroupID = RoomID(40626)
-	//musicRoomGroupID = RoomID(40627)
+	room1GroupID = RoomID("40625")
+	room2GroupID = RoomID("42943")
+	room3GroupID = RoomID("42944")
+	//exerciseHallGroupID = RoomID("40626")
+	//musicRoomGroupID = RoomID("40627")
 
 	// ID for the type of rooms available for booking
-	groupRoomTypeID = TypeID(18313)
-	//musicRoomTypeID = TypeID(18314)
-	//exerciseHallTypeID = TypeID(18315)
+	groupRoomTypeID = TypeID("18313")
+	//musicRoomTypeID = TypeID("18314")
+	//exerciseHallTypeID = TypeID("18315")
 )
 
 var (
@@ -65,14 +64,20 @@ var (
 		roomID: room3GroupID,
 		typeID: groupRoomTypeID,
 	}
+	rooms = map[RoomID]room{
+		room1GroupID: room1,
+		room2GroupID: room2,
+		room3GroupID: room3,
+	}
 )
 
-type RoomID int
+type RoomID string
 
-type TypeID int
+type TypeID string
 
 type BookingService struct {
 	client *http.Client
+	rooms  map[RoomID]room
 }
 
 func NewBookingService(pid, pass string) (BookingService, error) {
@@ -106,12 +111,19 @@ func NewBookingService(pid, pass string) (BookingService, error) {
 
 	return BookingService{
 		client: client,
+		rooms:  rooms,
 	}, nil
 }
 
 func (bs *BookingService) Book(booking booking.Booking) error {
+	if _, ok := bs.rooms[RoomID(booking.Room.Id)]; !ok {
+		return errors.New("no such room")
+	}
+
+	// Since the call takes ~5 seconds to return on a success and doesn't give
+	// any indication if the booking succeeded or not the call is run asynchronously.
 	go bs.client.Get(fmt.Sprintf(bookURLFormat,
-		room1GroupID,
+		booking.Room.Id,
 		booking.Start.Format("2006-01-02"),
 		booking.Start.Hour(),
 	))
