@@ -120,18 +120,27 @@ func (bs *BookingService) Book(booking booking.Booking) error {
 		return errors.New("no such room")
 	}
 
-	// Since the call takes ~5 seconds to return on a success and doesn't give
-	// any indication if the booking succeeded or not the call is run asynchronously.
-	go bs.client.Get(fmt.Sprintf(bookURLFormat,
+	// NOTE: This call takes ~5 seconds to complete when successful
+	_, err := bs.client.Get(fmt.Sprintf(bookURLFormat,
 		booking.Room.Id,
 		booking.Start.Format("2006-01-02"),
 		booking.Start.Hour(),
 	))
-	return nil
+	return err
 }
 
-func (*BookingService) UnBook(booking booking.Booking) error {
-	panic("implement me")
+func (bs *BookingService) UnBook(booking booking.Booking) error {
+	if _, ok := bs.rooms[RoomID(booking.Room.Id)]; !ok {
+		return errors.New("no such room")
+	}
+
+	// NOTE: This call takes ~5 seconds to complete when successful
+	_, err := bs.client.Get(fmt.Sprintf(cancelURLFormat,
+		booking.Room.Id,
+		booking.Start.Format("2006-01-02"),
+		booking.Start.Hour(),
+	))
+	return err
 }
 
 func (bs *BookingService) MyBookings() ([]booking.Booking, error) {
