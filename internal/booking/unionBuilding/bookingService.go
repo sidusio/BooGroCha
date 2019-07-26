@@ -155,8 +155,13 @@ func loginForm(client *http.Client) (url.Values, error) {
 	return values, nil
 }
 
-func (*BookingService) Book(booking booking.Booking) error {
-	panic("implement me")
+func (bs *BookingService) Book(booking booking.Booking) error {
+	go bs.client.Get(fmt.Sprintf(bookURLFormat,
+		room1GroupID,
+		booking.Start.Format("2006-01-02"),
+		booking.Start.Hour(),
+	))
+	return nil
 }
 
 func (*BookingService) UnBook(booking booking.Booking) error {
