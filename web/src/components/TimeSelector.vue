@@ -5,13 +5,16 @@
     justify-center
     fill-height
   >
-    <v-date-picker
+    <v-time-picker
       no-title
-      first-day-of-week="1"
-      :min="today"
+      :allowed-minutes="[0, 15, 30, 45]"
+      v-model="value"
+      format="24hr"
+      :min="min"
+      :max="max"
       class="elevation-10"
-      @click:date="select"
-    ></v-date-picker>
+      @change="select"
+    ></v-time-picker>
   </v-container>
 </template>
 
@@ -22,10 +25,16 @@ export default {
   name: 'TimeSelector',
   data: () => ({
     today: moment().format('YYYY-MM-DD'),
+    value: new Date()
   }),
+  props: {
+    min: String,
+    max: String,
+  },
   methods: {
-    select(date) {
-      this.$emit('picked', date)
+    select(time) {
+      this.$emit('picked', time)
+      this.value = null
     },
   }
 }

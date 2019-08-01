@@ -12,14 +12,29 @@
       v-if="state === states.selectDate"
       @picked="dateSelected"
     ></DateSelector>
+    <TimeSelector
+      key="from-selector"
+      v-if="state === states.selectFromTime"
+      :max="toTime"
+      @picked="timeSelected"
+    >
+    </TimeSelector>
+    <TimeSelector
+      key="to-selector"
+      v-if="state === states.selectToTime"
+      :min="fromTime"
+      @picked="timeSelected"
+    >
+    </TimeSelector>
   </v-layout>
 </template>
 
 <script>
 import moment from 'moment'
 import DateSelector from '../components/DateSelector'
+import TimeSelector from '../components/TimeSelector'
 
-var states = Object.freeze({
+let states = Object.freeze({
   selectDate: 1,
   selectFromTime: 2,
   selectToTime: 3,
@@ -29,7 +44,10 @@ var states = Object.freeze({
 
 export default {
   name: 'Book',
-  components: {DateSelector},
+  components: {
+    TimeSelector,
+    DateSelector,
+  },
   data: () => ({
     states: states,
     date: null,
@@ -39,12 +57,21 @@ export default {
   computed: {
     state() {
       if (this.date === null) return states.selectDate
+      else if (this.fromTime === null) return states.selectFromTime
+      else if (this.toTime === null) return states.selectToTime
       else return states.loading
     }
   },
   methods: {
     dateSelected(date) {
       this.date = date
+    },
+    timeSelected(time) {
+      if (this.state === states.selectFromTime) {
+        this.fromTime = time
+      } else if (this.state === states.selectToTime) {
+        this.toTime = time
+      }
     },
     formatDate(date) {
       if (date === null) {
