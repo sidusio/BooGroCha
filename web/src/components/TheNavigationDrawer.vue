@@ -17,7 +17,6 @@
         <v-list-item-icon>
           <v-icon>{{ item.icon }}</v-icon>
         </v-list-item-icon>
-
         <v-list-item-content>
           <v-list-item-title>{{ item.title }}</v-list-item-title>
         </v-list-item-content>
@@ -35,6 +34,11 @@ export default {
         title: "Book",
         route: "/",
         icon: "mdi-plus",
+      },
+      {
+        title: "Settings",
+        route: "Settings",
+        icon: "mdi-settings",
       },
       {
         title: "About",
