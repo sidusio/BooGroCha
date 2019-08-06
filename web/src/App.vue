@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app class="app">
     <TheNavigationDrawer
       :drawer.sync="drawer"
     ></TheNavigationDrawer>
@@ -26,3 +26,12 @@ export default {
   }),
 }
 </script>
+
+<style scoped lang="scss">
+  .app {
+    height: 100vh;
+    .v-content {
+      height: 100%;
+    }
+  }
+</style>

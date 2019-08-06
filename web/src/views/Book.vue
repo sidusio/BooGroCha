@@ -1,38 +1,56 @@
 <template>
-  <v-layout
-    column
-    fill-height
+  <div
+    class="book"
   >
-    <v-container>
-      <span v-if="date !== null">Date: {{formatDate(date)}} </span>
-      <span v-if="fromTime !== null">| From: {{fromTime}} </span>
-      <span v-if="toTime !== null">| To: {{toTime}}</span>
+    <v-container
+      text-center
+      class="pb-0 mb-0"
+    >
+      <span class="underlined" v-if="date !== null" @click="date = null">
+        {{formatDate(date)}} <v-icon>mdi-menu-down</v-icon>
+      </span>
+    </v-container>
+    <v-container
+      text-center
+      v-if="fromTime !== null || toTime !== null"
+    >
+      <span class="underlined" v-if="fromTime !== null" @click="fromTime = null">
+        {{fromTime}} <v-icon>mdi-menu-down</v-icon>
+      </span>
+      -
+      <span class="underlined ml-1" v-if="toTime !== null" @click="toTime = null">
+        {{toTime}} <v-icon>mdi-menu-down</v-icon>
+      </span>
     </v-container>
     <DateSelector
       v-if="state === states.selectDate"
       @picked="dateSelected"
-    ></DateSelector>
+    />
     <TimeSelector
       key="from-selector"
       v-if="state === states.selectFromTime"
       :max="toTime"
       @picked="timeSelected"
-    >
-    </TimeSelector>
+    />
     <TimeSelector
       key="to-selector"
       v-if="state === states.selectToTime"
       :min="fromTime"
       @picked="timeSelected"
-    >
-    </TimeSelector>
-  </v-layout>
+    />
+    <RoomSelector
+      v-if="state === states.selectRoom"
+      :rooms="availableRooms"
+      @book="book"
+    />
+  </div>
 </template>
 
 <script>
 import moment from 'moment'
 import DateSelector from '../components/DateSelector'
 import TimeSelector from '../components/TimeSelector'
+import RoomSelector from '../components/RoomSelector'
 
 let states = Object.freeze({
   selectDate: 1,
@@ -47,12 +65,14 @@ export default {
   components: {
     TimeSelector,
     DateSelector,
+    RoomSelector,
   },
   data: () => ({
     states: states,
     date: null,
     fromTime: null,
     toTime: null,
+    availableRooms: null,
   }),
   computed: {
     state() {
@@ -77,11 +97,22 @@ export default {
       if (date === null) {
         return ''
       }
-      return moment(date).format("dd D/M")
-    }
+      return moment(date).format("dddd D/M")
+    },
+    book(room) {
+      console.log(room)
+    },
   }
 }
 </script>
 
 <style scoped>
+  .book {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .underlined {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  }
 </style>
