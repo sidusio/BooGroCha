@@ -99,7 +99,7 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 	bookings := make([]booking.Booking, 0, 4)
 	selectedDate := ""
 	for _, tr := range trs {
-		headline := tr.Find(".headline.changeDateLink")
+		headline := tr.Find(".headline.leftRounded.t")
 		if headline.Length() > 0 {
 			selectedDate = strings.Split(headline.Text(), " ")[1]
 		} else {
