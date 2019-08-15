@@ -11,7 +11,7 @@ A CLI client for chalmers' group room booking system.
 - [x] Delete bookings
 - [x] List bookings
 - [x] Relative times for bookings
-- [ ] [AUR package](https://github.com/williamleven/BooGroCha/issues/4)
+- [x] [AUR package](https://aur.archlinux.org/packages/boogrocha)
 - [x] [Rooms sorted base on user preferences](https://github.com/williamleven/BooGroCha/issues/5)
 - [ ] [Option to only show rooms from preferred campus](https://github.com/williamleven/BooGroCha/issues/6)
 - [ ] [Integrate with Chalmers Library booking system](https://github.com/williamleven/BooGroCha/issues/7)
