@@ -25,18 +25,18 @@ export default {
   name: 'TimeSelector',
   data: () => ({
     today: moment().format('YYYY-MM-DD'),
-    value: new Date()
+    value: new Date(),
   }),
   props: {
     min: String,
     max: String,
   },
   methods: {
-    select(time) {
+    select (time) {
       this.$emit('picked', time)
       this.value = null
     },
-  }
+  },
 }
 </script>
 

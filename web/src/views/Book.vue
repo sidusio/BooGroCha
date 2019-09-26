@@ -75,34 +75,34 @@ export default {
     availableRooms: null,
   }),
   computed: {
-    state() {
+    state () {
       if (this.date === null) return states.selectDate
       else if (this.fromTime === null) return states.selectFromTime
       else if (this.toTime === null) return states.selectToTime
       else return states.loading
-    }
+    },
   },
   methods: {
-    dateSelected(date) {
+    dateSelected (date) {
       this.date = date
     },
-    timeSelected(time) {
+    timeSelected (time) {
       if (this.state === states.selectFromTime) {
         this.fromTime = time
       } else if (this.state === states.selectToTime) {
         this.toTime = time
       }
     },
-    formatDate(date) {
+    formatDate (date) {
       if (date === null) {
         return ''
       }
-      return moment(date).format("dddd D/M")
+      return moment(date).format('dddd D/M')
     },
-    book(room) {
+    book (room) {
       console.log(room)
     },
-  }
+  },
 }
 </script>
 

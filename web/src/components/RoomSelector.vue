@@ -18,7 +18,6 @@
 </template>
 
 <script>
-import moment from 'moment'
 
 export default {
   name: 'DateSelector',
@@ -26,11 +25,11 @@ export default {
     rooms: Array,
   },
   methods: {
-    book(room) {
+    book (room) {
       console.log(room)
       this.$emit('book', room)
     },
-  }
+  },
 }
 </script>
 

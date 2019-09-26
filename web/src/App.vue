@@ -20,7 +20,7 @@
 import TheNavigationDrawer from './components/TheNavigationDrawer'
 export default {
   name: 'App',
-  components: {TheNavigationDrawer},
+  components: { TheNavigationDrawer },
   data: () => ({
     drawer: false,
   }),

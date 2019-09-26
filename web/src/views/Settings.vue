@@ -43,15 +43,15 @@
 import CredentialsStorage from '../mixins/CredentialsStorage'
 
 function notEmpty (input) {
-  return input !== '';
+  return input !== ''
 }
 export default {
   name: 'Settings',
   data: () => ({
     valid: false,
-    name: "",
-    nameRules : [notEmpty],
-    password: "",
+    name: '',
+    nameRules: [notEmpty],
+    password: '',
     passwordRules: [notEmpty],
   }),
   methods: {
@@ -60,8 +60,8 @@ export default {
     },
   },
   mixins: [
-    CredentialsStorage
-  ]
+    CredentialsStorage,
+  ],
 }
 </script>
 

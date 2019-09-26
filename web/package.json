@@ -38,7 +38,12 @@
       "plugin:vue/essential",
       "@vue/standard"
     ],
-    "rules": {},
+    "rules": {
+      "comma-dangle": [
+        "warn",
+        "always-multiline"
+      ]
+    },
     "parserOptions": {
       "parser": "babel-eslint"
     }

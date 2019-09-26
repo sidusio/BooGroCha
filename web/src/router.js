@@ -11,17 +11,17 @@ export default new Router({
     {
       path: '/',
       name: 'book',
-      component: Book
+      component: Book,
     },
     {
       path: '/about',
       name: 'about',
-      component: About
+      component: About,
     },
     {
       path: '/settings',
       name: 'settings',
-      component: Settings
+      component: Settings,
     },
-  ]
+  ],
 })

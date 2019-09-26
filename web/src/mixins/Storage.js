@@ -6,7 +6,7 @@ export default {
   }),
   computed: {
     storageSupported () {
-      return typeof(this.localStorage) !== "undefined"
+      return typeof (this.localStorage) !== 'undefined'
     },
   },
 }

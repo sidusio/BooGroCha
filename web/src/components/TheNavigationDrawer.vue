@@ -31,19 +31,19 @@ export default {
   data: () => ({
     items: [
       {
-        title: "Book",
-        route: "/",
-        icon: "mdi-plus",
+        title: 'Book',
+        route: '/',
+        icon: 'mdi-plus',
       },
       {
-        title: "Settings",
-        route: "Settings",
-        icon: "mdi-settings",
+        title: 'Settings',
+        route: 'Settings',
+        icon: 'mdi-settings',
       },
       {
-        title: "About",
-        route: "About",
-        icon: "mdi-information",
+        title: 'About',
+        route: 'About',
+        icon: 'mdi-information',
       },
     ],
   }),
@@ -52,13 +52,13 @@ export default {
   },
   computed: {
     open: {
-      get() {
+      get () {
         return this.drawer
       },
-      set(v) {
-        this.$emit("update:drawer", v)
+      set (v) {
+        this.$emit('update:drawer', v)
       },
-    }
+    },
   },
 }
 </script>

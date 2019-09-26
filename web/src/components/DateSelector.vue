@@ -24,10 +24,10 @@ export default {
     today: moment().format('YYYY-MM-DD'),
   }),
   methods: {
-    select(date) {
+    select (date) {
       this.$emit('picked', date)
     },
-  }
+  },
 }
 </script>
 
