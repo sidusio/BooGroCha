@@ -1,4 +1,4 @@
-package diectory
+package directory
 
 import (
 	"fmt"
@@ -143,6 +143,7 @@ func (bs *BookingService) Available(start time.Time, end time.Time) ([]booking.R
 		return nil, ErrAllServicesFailed
 	}
 
+	// TODO: Return errors when they appear
 	return rooms, nil
 }
 

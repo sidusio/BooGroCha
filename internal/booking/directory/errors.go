@@ -1,4 +1,4 @@
-package diectory
+package directory
 
 type Error string
 
