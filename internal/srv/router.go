@@ -32,18 +32,20 @@ func (s *server) newRouter() chi.Router {
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/", s.saveCredentials)
 			r.Delete("/", s.clearCredentials)
+			r.Get("/test", s.testCredentials)
 		})
 		r.Route("/", func(r chi.Router) {
 			r.Use(s.middlewareRefreshCredentials)
 			r.Use(s.middlewareExtractCredentials)
-			r.Get("/ping", func(writer http.ResponseWriter, request *http.Request) {
-				fmt.Fprintf(writer, "pong")
-			})
+
 			r.Route("/booking", func(r chi.Router) {
 				r.Get("/available", s.available)
 				r.Get("/", s.bookings)
 				r.Delete("/{bookingID}", s.delete)
 			})
+		})
+		r.Get("/ping", func(writer http.ResponseWriter, request *http.Request) {
+			fmt.Fprintf(writer, "pong")
 		})
 	})
 
