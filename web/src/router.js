@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Book from './views/Book.vue'
-import About from './views/About.vue'
 import Settings from './views/Settings.vue'
 
 Vue.use(Router)
@@ -10,18 +9,23 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'book',
+      name: 'Book',
       component: Book,
-    },
-    {
-      path: '/about',
-      name: 'about',
-      component: About,
+      meta: {
+        requiresCredentials: true,
+        priority: 1,
+        icon: 'mdi-plus',
+      },
     },
     {
       path: '/settings',
-      name: 'settings',
+      name: 'Settings',
       component: Settings,
+      meta: {
+        requiresCredentials: false,
+        priority: 10,
+        icon: 'mdi-settings',
+      },
     },
   ],
 })

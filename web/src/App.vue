@@ -24,6 +24,21 @@ export default {
   data: () => ({
     drawer: false,
   }),
+  methods: {
+    checkCredentials (route) {
+      this.$store.dispatch('updateCredentialsStatus').then(() => {
+        if (!this.$store.getters.hasCredentials && route.meta.requiresCredentials) {
+          this.$router.push('settings')
+        }
+      })
+    },
+  },
+  mounted () {
+    this.$router.afterEach((to) => {
+      this.checkCredentials(to)
+    })
+    this.checkCredentials(this.$route)
+  },
 }
 </script>
 

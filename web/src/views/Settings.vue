@@ -53,14 +53,19 @@
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex'
+
 export default {
   name: 'Settings',
   data: () => ({
-    valid: false,
     name: '',
     password: '',
-    hasCredentials: false,
   }),
+  computed: {
+    ...mapGetters([
+      'hasCredentials',
+    ]),
+  },
   methods: {
     send () {
       this.axios.post('auth', {
@@ -69,6 +74,8 @@ export default {
       }).then(response => {
         if (response.status !== 200) {
           console.log('Resolved with response: ', response)
+        } else {
+          this.$router.push('/')
         }
       }).catch(reason => {
         console.log('Failed with reason: ', reason)
@@ -89,19 +96,12 @@ export default {
         this.updateCredentialsStatus()
       })
     },
-    updateCredentialsStatus () {
-      this.axios.get('auth/test').then(response => {
-        this.hasCredentials = response.data.HasCookie === true
-      }).catch(reason => {
-        console.log('Failed with reason: ', reason)
-      })
-    },
     notEmpty (input) {
       return input !== ''
     },
-  },
-  mounted () {
-    this.updateCredentialsStatus()
+    ...mapActions([
+      'updateCredentialsStatus',
+    ]),
   },
 }
 </script>
