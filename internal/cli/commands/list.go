@@ -33,7 +33,7 @@ func runList(cmd *cobra.Command, args []string, getBS func() booking.BookingServ
 	if !listJSON {
 		fmt.Printf("%-7s %-13s %-15s %s\n", "DATE", "TIME", "ROOM", "TEXT")
 		for _, booking := range bookings {
-			date := booking.Start.Format("02/01")
+			date := booking.Start.Format("Mon 02/01")
 			time := fmt.Sprintf("%s-%s", booking.Start.Format("15:04"), booking.End.Format("15:04"))
 			text := fmt.Sprintf("\"%s\"", booking.Text)
 			fmt.Printf("%-7s %-13s %-15s %s\n",
