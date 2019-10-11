@@ -11,38 +11,39 @@ import (
 )
 
 const (
-	prefixFormat = "%s/%s"
+	prefixFormat          = "%s/%s"
+	aggregatorServiceName = "aggregator"
 )
 
-type BookingService struct {
+type BookingAggregator struct {
 	providers map[string]booking.BookingService
 	log       log.Logger
 }
 
-func NewBookingService(services map[string]booking.BookingService, log log.Logger) *BookingService {
-	return &BookingService{providers: services, log: log}
+func NewBookingService(services map[string]booking.BookingService, log log.Logger) *BookingAggregator {
+	return &BookingAggregator{providers: services, log: log}
 }
 
 type availableResult struct {
 	available []booking.Room
-	err       *serviceError
+	err       *ServiceError
 }
 
 type myBookingsResult struct {
 	bookings []booking.Booking
-	err      *serviceError
+	err      *ServiceError
 }
 
-type serviceError struct {
-	serviceName string
-	err         error
+type ServiceError struct {
+	ServiceName string
+	Err         error
 }
 
-func (e *serviceError) Error() string {
-	return fmt.Sprintf("couldn't get available rooms from provider %s: %s", e.serviceName, e.err.Error())
+func (e *ServiceError) Error() string {
+	return fmt.Sprintf("couldn't get available rooms from provider %s: %s", e.ServiceName, e.Err.Error())
 }
 
-func (bs *BookingService) Book(b booking.Booking) error {
+func (bs *BookingAggregator) Book(b booking.Booking) error {
 	if len(bs.providers) == 0 {
 		err := ErrNoServices
 		bs.log.Error(err.Error())
@@ -57,7 +58,7 @@ func (bs *BookingService) Book(b booking.Booking) error {
 	return bs.providers[p].Book(b)
 }
 
-func (bs *BookingService) UnBook(b booking.Booking) error {
+func (bs *BookingAggregator) UnBook(b booking.Booking) error {
 	if len(bs.providers) == 0 {
 		return ErrNoServices
 	}
@@ -70,9 +71,14 @@ func (bs *BookingService) UnBook(b booking.Booking) error {
 	return bs.providers[p].UnBook(b)
 }
 
-func (bs *BookingService) MyBookings() ([]booking.Booking, error) {
+func (bs *BookingAggregator) MyBookings() ([]booking.Booking, []*ServiceError) {
 	if len(bs.providers) == 0 {
-		return nil, ErrNoServices
+		return nil, []*ServiceError{
+			{
+				ServiceName: aggregatorServiceName,
+				Err:         ErrNoServices,
+			},
+		}
 	}
 
 	rooms, errs := bs.myBookings()
@@ -80,14 +86,10 @@ func (bs *BookingService) MyBookings() ([]booking.Booking, error) {
 		bs.log.Error(err.Error())
 	}
 
-	if len(errs) == len(bs.providers) {
-		return nil, ErrAllServicesFailed
-	}
-
-	return rooms, nil
+	return rooms, errs
 }
 
-func (bs *BookingService) myBookings() ([]booking.Booking, []*serviceError) {
+func (bs *BookingAggregator) myBookings() ([]booking.Booking, []*ServiceError) {
 	incoming := make(chan myBookingsResult)
 
 	wg := sync.WaitGroup{}
@@ -103,9 +105,9 @@ func (bs *BookingService) myBookings() ([]booking.Booking, []*serviceError) {
 			if err != nil {
 				incoming <- myBookingsResult{
 					bookings: nil,
-					err: &serviceError{
-						serviceName: name,
-						err:         err,
+					err: &ServiceError{
+						ServiceName: name,
+						Err:         err,
 					},
 				}
 				return
@@ -118,7 +120,7 @@ func (bs *BookingService) myBookings() ([]booking.Booking, []*serviceError) {
 	}
 
 	var bookings []booking.Booking
-	var errors []*serviceError
+	var errors []*ServiceError
 	for result := range incoming {
 		wg.Done()
 		if result.err != nil {
@@ -129,9 +131,14 @@ func (bs *BookingService) myBookings() ([]booking.Booking, []*serviceError) {
 	return bookings, errors
 }
 
-func (bs *BookingService) Available(start time.Time, end time.Time) ([]booking.Room, error) {
+func (bs *BookingAggregator) Available(start time.Time, end time.Time) ([]booking.Room, []*ServiceError) {
 	if len(bs.providers) == 0 {
-		return nil, ErrNoServices
+		return nil, []*ServiceError{
+			{
+				ServiceName: aggregatorServiceName,
+				Err:         ErrNoServices,
+			},
+		}
 	}
 
 	rooms, errs := bs.available(start, end)
@@ -139,15 +146,10 @@ func (bs *BookingService) Available(start time.Time, end time.Time) ([]booking.R
 		bs.log.Error(err.Error())
 	}
 
-	if len(errs) == len(bs.providers) {
-		return nil, ErrAllServicesFailed
-	}
-
-	// TODO: Return errors when they appear
-	return rooms, nil
+	return rooms, errs
 }
 
-func (bs *BookingService) available(start time.Time, end time.Time) ([]booking.Room, []*serviceError) {
+func (bs *BookingAggregator) available(start time.Time, end time.Time) ([]booking.Room, []*ServiceError) {
 	incoming := make(chan availableResult)
 
 	wg := sync.WaitGroup{}
@@ -163,9 +165,9 @@ func (bs *BookingService) available(start time.Time, end time.Time) ([]booking.R
 			if err != nil {
 				incoming <- availableResult{
 					available: nil,
-					err: &serviceError{
-						serviceName: name,
-						err:         err,
+					err: &ServiceError{
+						ServiceName: name,
+						Err:         err,
 					},
 				}
 				return
@@ -178,7 +180,7 @@ func (bs *BookingService) available(start time.Time, end time.Time) ([]booking.R
 	}
 
 	var rooms []booking.Room
-	var errors []*serviceError
+	var errors []*ServiceError
 	for result := range incoming {
 		wg.Done()
 		if result.err != nil {

@@ -183,7 +183,7 @@ func TestBookingService_Book(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bs := BookingService{
+			bs := BookingAggregator{
 				providers: tt.fields.services,
 				log:       tt.fields.log,
 			}
@@ -297,7 +297,7 @@ func TestBookingService_UnBook(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := BookingService{
+			b := BookingAggregator{
 				providers: tt.fields.services,
 				log:       tt.fields.log,
 			}
@@ -388,7 +388,7 @@ func TestBookingService_MyBookings(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := BookingService{
+			b := BookingAggregator{
 				providers: tt.fields.services,
 				log:       tt.fields.log,
 			}
@@ -532,7 +532,7 @@ func TestBookingService_Available(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bs := &BookingService{
+			bs := &BookingAggregator{
 				providers: tt.fields.services,
 				log:       tt.fields.log,
 			}
