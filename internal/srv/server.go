@@ -75,3 +75,33 @@ func (s *server) available(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 
 }
+
+func (s *server) bookings(w http.ResponseWriter, r *http.Request) {
+	creds, ok := r.Context().Value(credentialsContextKey).(credentials.Credentials)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	cbs, err := chalmers.NewBookingService(creds.CID, creds.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	bs := directory.NewBookingService(map[string]booking.BookingService{
+		"timeedit": cbs,
+	}, &fmtLog.Logger{})
+
+	bookings, errs := bs.MyBookings()
+
+	data, err := json.Marshal(struct {
+		Rooms  []booking.Booking
+		Errors []*directory.ServiceError
+	}{
+		Rooms:  bookings,
+		Errors: errs,
+	})
+
+	_, _ = w.Write(data)
+}
