@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/spf13/cobra"
 	"sidus.io/boogrocha/internal/booking"
 )
@@ -33,8 +34,8 @@ func runList(cmd *cobra.Command, args []string, getBS func() booking.BookingServ
 	if !listJSON {
 		fmt.Printf("%-7s %-13s %-15s %s\n", "DATE", "TIME", "ROOM", "TEXT")
 		for _, booking := range bookings {
-			date := booking.Start.Format("Mon 02/01")
-			time := fmt.Sprintf("%s-%s", booking.Start.Format("15:04"), booking.End.Format("15:04"))
+			date := formatDateWithWeekday(booking)
+			time := formatTime(booking)
 			text := fmt.Sprintf("\"%s\"", booking.Text)
 			fmt.Printf("%-7s %-13s %-15s %s\n",
 				date,
@@ -47,4 +48,12 @@ func runList(cmd *cobra.Command, args []string, getBS func() booking.BookingServ
 		b, _ := json.Marshal(bookings)
 		fmt.Println(string(b))
 	}
+}
+
+func formatDateWithWeekday(booking booking.Booking) (date string) {
+	return booking.Start.Format("Mon 02/01")
+}
+
+func formatTime(booking booking.Booking) (time string) {
+	return fmt.Sprintf("%s-%s", booking.Start.Format("15:04"), booking.End.Format("15:04"))
 }
