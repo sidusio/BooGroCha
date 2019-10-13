@@ -3,13 +3,14 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
-	"sidus.io/boogrocha/internal/booking"
-	"sidus.io/boogrocha/internal/ranking"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
+	"sidus.io/boogrocha/internal/booking"
+	"sidus.io/boogrocha/internal/ranking"
 )
 
 func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingService) *cobra.Command {
@@ -69,7 +70,7 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 			End:   endDate,
 			Text:  message,
 		}
-		err := bs.Book(booking)
+		_, err := bs.Book(booking)
 		if err != nil {
 			fmt.Println("couldn't book room")
 			os.Exit(1)
@@ -122,7 +123,7 @@ func showAvailable(available []booking.Room) {
 		room := available[i]
 
 		prevIsSame := i > 0 && available[i-1].Id == room.Id
-		nextIsSame := i < len(available) - 1 && available[i+1].Id == room.Id
+		nextIsSame := i < len(available)-1 && available[i+1].Id == room.Id
 		roomName := room.Id
 		if prevIsSame || nextIsSame {
 			roomName = fmt.Sprintf("%s.%s", room.Provider, room.Id)

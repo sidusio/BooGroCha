@@ -3,16 +3,18 @@ package chalmers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"sidus.io/boogrocha/internal/booking"
 	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/publicsuffix"
+	"sidus.io/boogrocha/internal/booking"
 )
 
 const samelURL = "https://se.timeedit.net/web/chalmers/db1/timeedit/sso/saml2?back=https%3A%2F%2Fcloud.timeedit.net%2Fchalmers%2Fweb%2Fb1%2F"
@@ -27,12 +29,18 @@ type BookingService struct {
 	rooms  rooms
 }
 
-func (bs BookingService) Book(booking booking.Booking) error {
+func (bs BookingService) Book(booking booking.Booking) (string, error) {
 	formData := url.Values{}
 	roomId, err := bs.rooms.idFromName(booking.Room.Id)
 	if err != nil {
-		return err
+		return "", err
 	}
+
+	preBookings, err := bs.MyBookings()
+	if err != nil {
+		return "", err
+	}
+
 	formData.Add("o", roomId)       // Denotes the room
 	formData.Add("o", otherPurpose) // Denotes the purpose always "other"
 	formData.Add("dates", booking.Start.Format("20060102"))
@@ -43,18 +51,41 @@ func (bs BookingService) Book(booking booking.Booking) error {
 	formData.Add("url", bookURL)
 	resp, err := bs.client.PostForm(bookURL, formData)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return fmt.Errorf("failed to book room (%d)", resp.StatusCode)
+			return "", fmt.Errorf("failed to book room (%d)", resp.StatusCode)
 		}
-		return fmt.Errorf(string(body))
+		return "", fmt.Errorf(string(body))
 	}
-	return nil
+
+	for i := 0; i < 3; i++ {
+		postBookings, err := bs.MyBookings()
+		if err != nil {
+			return "", err
+		}
+		if len(postBookings) == len(preBookings) {
+			time.Sleep(time.Duration(math.Pow(2.0, float64(i))) * 100 * time.Millisecond)
+		} else {
+			for _, post := range postBookings {
+				found := false
+				for _, pre := range preBookings {
+					if pre.Id == post.Id {
+						found = true
+					}
+				}
+				if !found {
+					return post.Id, nil
+				}
+			}
+		}
+	}
+
+	return "", fmt.Errorf("couldn't find id of new booking")
 }
 
 func (bs BookingService) UnBook(booking booking.Booking) error {
@@ -133,11 +164,11 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 				Text:  text,
 				Start: startTime,
 				End:   endTime,
-				Room:  booking.Room{
+				Room: booking.Room{
 					Provider: providerName,
 					Id:       roomInfo,
 				},
-				Id:    id,
+				Id: id,
 			})
 		}
 	}
