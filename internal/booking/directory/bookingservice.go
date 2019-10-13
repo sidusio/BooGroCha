@@ -43,16 +43,16 @@ func (e *ServiceError) Error() string {
 	return fmt.Sprintf("couldn't get available rooms from provider %s: %s", e.ServiceName, e.Err.Error())
 }
 
-func (bs *BookingAggregator) Book(b booking.Booking) error {
+func (bs *BookingAggregator) Book(b booking.Booking) (string, error) {
 	if len(bs.providers) == 0 {
 		err := ErrNoServices
 		bs.log.Error(err.Error())
-		return err
+		return "", err
 	}
 
 	p := b.Room.Provider
 	if bs.providers[p] == nil {
-		return fmt.Errorf("booking service not found: %s", p)
+		return "", fmt.Errorf("booking service not found: %s", p)
 	}
 
 	return bs.providers[p].Book(b)
