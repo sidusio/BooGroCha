@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"sidus.io/boogrocha/internal/booking/chalmers"
+
 	"sidus.io/boogrocha/internal/credentials"
 )
 
@@ -57,22 +59,30 @@ func (*server) clearCredentials(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *server) testCredentials(w http.ResponseWriter, r *http.Request)  {
-	_, err := extractCredentials(r, s.credentialsSecret)
+func (s *server) testCredentials(w http.ResponseWriter, r *http.Request) {
+	creds, err := extractCredentials(r, s.credentialsSecret)
 	answer := struct {
-		HasCookie bool
+		HasCookie        bool
+		ChalmersIDPValid bool
 	}{
-		HasCookie: err == nil,
+		HasCookie:        err == nil,
+		ChalmersIDPValid: false,
+	}
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(answer)
+		return
 	}
 
 	if answer.HasCookie {
-		// verify credentials
+		_, err = chalmers.NewBookingService(creds.CID, creds.Password)
+		if err == nil {
+			answer.ChalmersIDPValid = true
+		}
 	}
-
-	json.NewEncoder(w).Encode(answer)
+	_ = json.NewEncoder(w).Encode(answer)
 }
 
-func extractCredentials(r *http.Request, secret []byte) (credentials.Credentials, error)  {
+func extractCredentials(r *http.Request, secret []byte) (credentials.Credentials, error) {
 	c, err := r.Cookie(credentialsCookieKey)
 	if err != nil {
 		return credentials.Credentials{}, fmt.Errorf("could not find cookie (%s): %w", credentialsCookieKey, err)
