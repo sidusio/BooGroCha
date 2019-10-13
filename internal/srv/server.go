@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi"
+
 	"sidus.io/boogrocha/internal/booking"
 	"sidus.io/boogrocha/internal/booking/directory"
 
@@ -101,6 +103,41 @@ func (s *server) bookings(w http.ResponseWriter, r *http.Request) {
 	}{
 		Rooms:  bookings,
 		Errors: errs,
+	})
+
+	_, _ = w.Write(data)
+}
+
+func (*server) delete(w http.ResponseWriter, r *http.Request) {
+	creds, ok := r.Context().Value(credentialsContextKey).(credentials.Credentials)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	bookingID := chi.URLParam(r, "bookingID")
+
+	cbs, err := chalmers.NewBookingService(creds.CID, creds.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	bs := directory.NewBookingService(map[string]booking.BookingService{
+		"timeedit": cbs,
+	}, &fmtLog.Logger{})
+
+	err = bs.UnBook(booking.Booking{
+		Room: booking.Room{
+			Provider: "timeedit",
+		},
+		Id: bookingID,
+	})
+
+	data, err := json.Marshal(struct {
+		Error error
+	}{
+		Error: err,
 	})
 
 	_, _ = w.Write(data)

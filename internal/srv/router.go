@@ -32,6 +32,7 @@ func (s *server) newRouter() chi.Router {
 			r.Route("/booking", func(r chi.Router) {
 				r.Get("/available", s.available)
 				r.Get("/", s.bookings)
+				r.Delete("/{bookingID}", s.delete)
 			})
 		})
 	})
