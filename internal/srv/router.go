@@ -29,6 +29,9 @@ func (s *server) newRouter() chi.Router {
 			r.Get("/ping", func(writer http.ResponseWriter, request *http.Request) {
 				fmt.Fprintf(writer, "pong")
 			})
+			r.Route("/booking", func(r chi.Router) {
+				r.Get("/available", s.available)
+			})
 		})
 	})
 
