@@ -43,13 +43,13 @@ func (s *server) available(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fromTime, err := time.Parse(time.RFC3339, fromTimeString)
+	fromTime, err := time.Parse("2006-01-02T15:04", fromTimeString)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	toTime, err := time.Parse(time.RFC3339, toTimeString)
+	toTime, err := time.Parse("2006-01-02T15:04", toTimeString)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return

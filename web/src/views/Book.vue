@@ -79,6 +79,7 @@ export default {
       if (this.date === null) return states.selectDate
       else if (this.fromTime === null) return states.selectFromTime
       else if (this.toTime === null) return states.selectToTime
+      else if (this.availableRooms !== null) return states.selectRoom
       else return states.loading
     },
   },
@@ -101,6 +102,33 @@ export default {
     },
     book (room) {
       console.log(room)
+    },
+    getAvailableRooms () {
+      this.availableRooms = null
+      if (this.date === null) return
+      if (this.fromTime === null) return
+      if (this.toTime === null) return
+      this.axios.get('booking/available', {
+        params: {
+          from: moment(moment(this.date).format('YYYY-M-DT') + this.fromTime).format('YYYY-M-DTH:mm'),
+          to: moment(moment(this.date).format('YYYY-M-DT') + this.toTime).format('YYYY-M-DTH:mm'),
+        },
+      }).then((response) => {
+        if (response.status === 200) {
+          this.availableRooms = response.data.Rooms
+        }
+      })
+    },
+  },
+  watch: {
+    date () {
+      this.getAvailableRooms()
+    },
+    fromTime () {
+      this.getAvailableRooms()
+    },
+    toTime () {
+      this.getAvailableRooms()
     },
   },
 }
