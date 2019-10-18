@@ -12,6 +12,7 @@
         label="Password"
         prepend-icon="mdi-lock"
         type="password"
+        @keyup.enter="send"
         required
       ></v-text-field>
       <v-alert
