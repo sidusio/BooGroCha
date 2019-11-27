@@ -9,8 +9,6 @@ import (
 	"github.com/go-chi/chi"
 
 	"sidus.io/boogrocha/internal/booking"
-	"sidus.io/boogrocha/internal/booking/directory"
-
 	"sidus.io/boogrocha/internal/booking/chalmers"
 	"sidus.io/boogrocha/internal/credentials"
 	fmtLog "sidus.io/boogrocha/internal/log/fmt"
@@ -61,7 +59,7 @@ func (s *server) available(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bs := directory.NewBookingService(map[string]booking.BookingService{
+	bs := booking.NewBookingService(map[string]booking.BookingService{
 		"timeedit": cbs,
 	}, &fmtLog.Logger{})
 
@@ -69,7 +67,7 @@ func (s *server) available(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(struct {
 		Rooms  []booking.Room
-		Errors []*directory.ServiceError
+		Errors []*booking.ServiceError
 	}{
 		Rooms:  rooms,
 		Errors: errs,
@@ -92,7 +90,7 @@ func (s *server) bookings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bs := directory.NewBookingService(map[string]booking.BookingService{
+	bs := booking.NewBookingService(map[string]booking.BookingService{
 		"timeedit": cbs,
 	}, &fmtLog.Logger{})
 
@@ -100,7 +98,7 @@ func (s *server) bookings(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(struct {
 		Rooms  []booking.Booking
-		Errors []*directory.ServiceError
+		Errors []*booking.ServiceError
 	}{
 		Rooms:  bookings,
 		Errors: errs,
@@ -124,7 +122,7 @@ func (*server) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bs := directory.NewBookingService(map[string]booking.BookingService{
+	bs := booking.NewBookingService(map[string]booking.BookingService{
 		"timeedit": cbs,
 	}, &fmtLog.Logger{})
 
@@ -191,7 +189,7 @@ func (*server) book(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bs := directory.NewBookingService(map[string]booking.BookingService{
+	bs := booking.NewBookingService(map[string]booking.BookingService{
 		"timeedit": cbs,
 	}, &fmtLog.Logger{})
 

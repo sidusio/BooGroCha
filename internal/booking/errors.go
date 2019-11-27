@@ -1,4 +1,4 @@
-package directory
+package booking
 
 type Error string
 

@@ -1,4 +1,4 @@
-package directory
+package booking
 
 import (
 	"fmt"
@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"sidus.io/boogrocha/internal/log"
-
-	"sidus.io/boogrocha/internal/booking"
 )
 
 const (
@@ -16,21 +14,21 @@ const (
 )
 
 type BookingAggregator struct {
-	providers map[string]booking.BookingService
+	providers map[string]BookingService
 	log       log.Logger
 }
 
-func NewBookingService(services map[string]booking.BookingService, log log.Logger) *BookingAggregator {
+func NewBookingService(services map[string]BookingService, log log.Logger) *BookingAggregator {
 	return &BookingAggregator{providers: services, log: log}
 }
 
 type availableResult struct {
-	available []booking.Room
+	available []Room
 	err       *ServiceError
 }
 
 type myBookingsResult struct {
-	bookings []booking.Booking
+	bookings []Booking
 	err      *ServiceError
 }
 
@@ -43,7 +41,7 @@ func (e *ServiceError) Error() string {
 	return fmt.Sprintf("couldn't get available rooms from provider %s: %s", e.ServiceName, e.Err.Error())
 }
 
-func (bs *BookingAggregator) Book(b booking.Booking) (string, error) {
+func (bs *BookingAggregator) Book(b Booking) (string, error) {
 	if len(bs.providers) == 0 {
 		err := ErrNoServices
 		bs.log.Error(err.Error())
@@ -58,7 +56,7 @@ func (bs *BookingAggregator) Book(b booking.Booking) (string, error) {
 	return bs.providers[p].Book(b)
 }
 
-func (bs *BookingAggregator) UnBook(b booking.Booking) error {
+func (bs *BookingAggregator) UnBook(b Booking) error {
 	if len(bs.providers) == 0 {
 		return ErrNoServices
 	}
@@ -71,7 +69,7 @@ func (bs *BookingAggregator) UnBook(b booking.Booking) error {
 	return bs.providers[p].UnBook(b)
 }
 
-func (bs *BookingAggregator) MyBookings() ([]booking.Booking, []*ServiceError) {
+func (bs *BookingAggregator) MyBookings() ([]Booking, []*ServiceError) {
 	if len(bs.providers) == 0 {
 		return nil, []*ServiceError{
 			{
@@ -89,7 +87,7 @@ func (bs *BookingAggregator) MyBookings() ([]booking.Booking, []*ServiceError) {
 	return rooms, errs
 }
 
-func (bs *BookingAggregator) myBookings() ([]booking.Booking, []*ServiceError) {
+func (bs *BookingAggregator) myBookings() ([]Booking, []*ServiceError) {
 	incoming := make(chan myBookingsResult)
 
 	wg := sync.WaitGroup{}
@@ -100,7 +98,7 @@ func (bs *BookingAggregator) myBookings() ([]booking.Booking, []*ServiceError) {
 
 	for name, provider := range bs.providers {
 		wg.Add(1)
-		go func(name string, provider booking.BookingService) {
+		go func(name string, provider BookingService) {
 			bookings, err := provider.MyBookings()
 			if err != nil {
 				incoming <- myBookingsResult{
@@ -119,7 +117,7 @@ func (bs *BookingAggregator) myBookings() ([]booking.Booking, []*ServiceError) {
 		}(name, provider)
 	}
 
-	var bookings []booking.Booking
+	var bookings []Booking
 	var errors []*ServiceError
 	for result := range incoming {
 		wg.Done()
@@ -131,7 +129,7 @@ func (bs *BookingAggregator) myBookings() ([]booking.Booking, []*ServiceError) {
 	return bookings, errors
 }
 
-func (bs *BookingAggregator) Available(start time.Time, end time.Time) ([]booking.Room, []*ServiceError) {
+func (bs *BookingAggregator) Available(start time.Time, end time.Time) ([]Room, []*ServiceError) {
 	if len(bs.providers) == 0 {
 		return nil, []*ServiceError{
 			{
@@ -149,7 +147,7 @@ func (bs *BookingAggregator) Available(start time.Time, end time.Time) ([]bookin
 	return rooms, errs
 }
 
-func (bs *BookingAggregator) available(start time.Time, end time.Time) ([]booking.Room, []*ServiceError) {
+func (bs *BookingAggregator) available(start time.Time, end time.Time) ([]Room, []*ServiceError) {
 	incoming := make(chan availableResult)
 
 	wg := sync.WaitGroup{}
@@ -160,7 +158,7 @@ func (bs *BookingAggregator) available(start time.Time, end time.Time) ([]bookin
 
 	for name, provider := range bs.providers {
 		wg.Add(1)
-		go func(name string, provider booking.BookingService) {
+		go func(name string, provider BookingService) {
 			a, err := provider.Available(start, end)
 			if err != nil {
 				incoming <- availableResult{
@@ -179,7 +177,7 @@ func (bs *BookingAggregator) available(start time.Time, end time.Time) ([]bookin
 		}(name, provider)
 	}
 
-	var rooms []booking.Room
+	var rooms []Room
 	var errors []*ServiceError
 	for result := range incoming {
 		wg.Done()
