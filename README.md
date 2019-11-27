@@ -34,8 +34,7 @@ $ cd BooGroCha/cmd/bgc
 $ go install
 ```
 
-### AUR package
-TBA
+### [AUR package](https://aur.archlinux.org/packages/boogrocha)
 
 ## Usage
 
