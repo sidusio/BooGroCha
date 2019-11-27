@@ -29,9 +29,9 @@ type BookingService struct {
 	rooms  rooms
 }
 
-func (bs BookingService) Book(booking booking.Booking) (string, error) {
+func (bs BookingService) Book(booking booking.ServiceBooking) (string, error) {
 	formData := url.Values{}
-	roomId, err := bs.rooms.idFromName(booking.Room.Id)
+	roomId, err := bs.rooms.idFromName(booking.Room)
 	if err != nil {
 		return "", err
 	}
@@ -88,7 +88,7 @@ func (bs BookingService) Book(booking booking.Booking) (string, error) {
 	return "", fmt.Errorf("couldn't find id of new booking")
 }
 
-func (bs BookingService) UnBook(booking booking.Booking) error {
+func (bs BookingService) UnBook(booking booking.ServiceBooking) error {
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s?id=%s", bookingsURL, booking.Id), nil)
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func (bs BookingService) UnBook(booking booking.Booking) error {
 	return nil
 }
 
-func (bs BookingService) MyBookings() ([]booking.Booking, error) {
+func (bs BookingService) MyBookings() ([]booking.ServiceBooking, error) {
 	resp, err := bs.client.Get(bookingsURL)
 	if err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 			trs[i-2] = selection
 		}
 	})
-	bookings := make([]booking.Booking, 0, 4)
+	bookings := make([]booking.ServiceBooking, 0, 4)
 	selectedDate := ""
 	for _, tr := range trs {
 		headline := tr.Find(".headline.leftRounded.t")
@@ -160,14 +160,11 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 				return nil, err
 			}
 
-			bookings = append(bookings, booking.Booking{
+			bookings = append(bookings, booking.ServiceBooking{
 				Text:  text,
 				Start: startTime,
 				End:   endTime,
-				Room: booking.Room{
-					Provider: providerName,
-					Id:       roomInfo,
-				},
+				Room: roomInfo,
 				Id: id,
 			})
 		}
@@ -196,7 +193,7 @@ func (bs BookingService) getText(id string) (string, error) {
 	return text, nil
 }
 
-func (bs BookingService) Available(start time.Time, end time.Time) ([]booking.Room, error) {
+func (bs BookingService) Available(start time.Time, end time.Time) ([]string, error) {
 	date := start.Format("20060102")
 	dates := fmt.Sprintf("%s-%s", date, date)
 
@@ -207,13 +204,10 @@ func (bs BookingService) Available(start time.Time, end time.Time) ([]booking.Ro
 	if err != nil {
 		return nil, err
 	}
-	var result []booking.Room
+	var result []string
 
 	for _, room := range rooms {
-		result = append(result, booking.Room{
-			Provider: providerName,
-			Id:       room.Name,
-		})
+		result = append(result, room.Name)
 	}
 	return result, nil
 }

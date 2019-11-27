@@ -7,25 +7,25 @@ import (
 )
 
 func TestSort(t *testing.T) {
-	r1 := booking.Room{
+	r1 := booking.AvailableRoom{
 		Provider: "A",
-		Id:       "A",
+		Name:       "A",
 	}
-	r2 := booking.Room{
+	r2 := booking.AvailableRoom{
 		Provider: "A",
-		Id:       "B",
+		Name:       "B",
 	}
-	r3 := booking.Room{
+	r3 := booking.AvailableRoom{
 		Provider: "B",
-		Id:       "C",
+		Name:       "C",
 	}
-	r4 := booking.Room{
+	r4 := booking.AvailableRoom{
 		Provider: "B",
-		Id:       "D",
+		Name:       "D",
 	}
-	r5 := booking.Room{
+	r5 := booking.AvailableRoom{
 		Provider: "B",
-		Id:       "E",
+		Name:       "E",
 	}
 	
 	ranking := Rankings{
@@ -35,7 +35,7 @@ func TestSort(t *testing.T) {
 		r3: 1,
 	}
 
-	sorted := ranking.Sort([]booking.Room{r1, r4, r2, r3, r5})
+	sorted := ranking.Sort([]booking.AvailableRoom{r1, r4, r2, r3, r5})
 	assert.Equal(t, len(sorted), 5, "Length should be conserved when sorting")
 
 	// Make sure list was sorted with lowest ranking first and reverse alphabetic order
@@ -48,25 +48,25 @@ func TestSort(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	r1 := booking.Room{
+	r1 := booking.AvailableRoom{
 		Provider: "A",
-		Id:       "Q",
+		Name:       "Q",
 	}
-	r2 := booking.Room{
+	r2 := booking.AvailableRoom{
 		Provider: "A",
-		Id:       "R",
+		Name:       "R",
 	}
-	r3 := booking.Room{
+	r3 := booking.AvailableRoom{
 		Provider: "B",
-		Id:       "A",
+		Name:       "A",
 	}
-	r4 := booking.Room{
+	r4 := booking.AvailableRoom{
 		Provider: "B",
-		Id:       "W",
+		Name:       "W",
 	}
-	r5 := booking.Room{
+	r5 := booking.AvailableRoom{
 		Provider: "B",
-		Id:       "E",
+		Name:       "E",
 	}
 	
 	ranking := Rankings{
@@ -75,7 +75,7 @@ func TestUpdate(t *testing.T) {
 		r3: 1,
 	}
 
-	ranking.Update(r3, []booking.Room{r1, r4, r5})
+	ranking.Update(r3, []booking.AvailableRoom{r1, r4, r5})
 
 	assert.Equal(t, ranking[r3], uint64(1), "Selected rooms ranking should not be effected")
 	assert.Equal(t, ranking[r2], uint64(0), "Elements outside of pool should not be effected")

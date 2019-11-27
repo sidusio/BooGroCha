@@ -6,9 +6,10 @@ import (
 	"os"
 	"sidus.io/boogrocha/internal/booking"
 	"sidus.io/boogrocha/internal/booking/chalmers"
+	fmtlog "sidus.io/boogrocha/internal/log/fmt"
 )
 
-func getBookingService() booking.BookingService {
+func getBookingService() *booking.Directory {
 	if viper.GetString("chalmers.cid") == "" {
 		fmt.Println("No cid specified, set it permanently with 'bgc config set cid' or use the '--cid' flag")
 		os.Exit(1)
@@ -18,5 +19,9 @@ func getBookingService() booking.BookingService {
 		fmt.Printf("Error: %s\n", err.Error())
 		os.Exit(1)
 	}
-	return bs
+
+	ba := booking.NewDirectory(map[string]booking.BookingService{
+		"chalmers": bs,
+	}, &fmtlog.Logger{})
+	return ba
 }

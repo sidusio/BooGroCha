@@ -13,17 +13,17 @@ const (
 	aggregatorServiceName = "aggregator"
 )
 
-type BookingAggregator struct {
+type Directory struct {
 	providers map[string]BookingService
 	log       log.Logger
 }
 
-func NewBookingService(services map[string]BookingService, log log.Logger) *BookingAggregator {
-	return &BookingAggregator{providers: services, log: log}
+func NewDirectory(services map[string]BookingService, log log.Logger) *Directory {
+	return &Directory{providers: services, log: log}
 }
 
 type availableResult struct {
-	available []Room
+	available []AvailableRoom
 	err       *ServiceError
 }
 
@@ -41,35 +41,35 @@ func (e *ServiceError) Error() string {
 	return fmt.Sprintf("couldn't get available rooms from provider %s: %s", e.ServiceName, e.Err.Error())
 }
 
-func (bs *BookingAggregator) Book(b Booking) (string, error) {
+func (bs *Directory) Book(b Booking) (string, error) {
 	if len(bs.providers) == 0 {
 		err := ErrNoServices
 		bs.log.Error(err.Error())
 		return "", err
 	}
 
-	p := b.Room.Provider
+	p := b.Provider
 	if bs.providers[p] == nil {
 		return "", fmt.Errorf("booking service not found: %s", p)
 	}
 
-	return bs.providers[p].Book(b)
+	return bs.providers[p].Book(b.ServiceBooking)
 }
 
-func (bs *BookingAggregator) UnBook(b Booking) error {
+func (bs *Directory) UnBook(b Booking) error {
 	if len(bs.providers) == 0 {
 		return ErrNoServices
 	}
 
-	p := b.Room.Provider
+	p := b.Provider
 	if bs.providers[p] == nil {
 		return fmt.Errorf("booking provider not found: %s", p)
 	}
 
-	return bs.providers[p].UnBook(b)
+	return bs.providers[p].UnBook(b.ServiceBooking)
 }
 
-func (bs *BookingAggregator) MyBookings() ([]Booking, []*ServiceError) {
+func (bs *Directory) MyBookings() ([]Booking, []*ServiceError) {
 	if len(bs.providers) == 0 {
 		return nil, []*ServiceError{
 			{
@@ -87,7 +87,7 @@ func (bs *BookingAggregator) MyBookings() ([]Booking, []*ServiceError) {
 	return rooms, errs
 }
 
-func (bs *BookingAggregator) myBookings() ([]Booking, []*ServiceError) {
+func (bs *Directory) myBookings() ([]Booking, []*ServiceError) {
 	incoming := make(chan myBookingsResult)
 
 	wg := sync.WaitGroup{}
@@ -99,7 +99,7 @@ func (bs *BookingAggregator) myBookings() ([]Booking, []*ServiceError) {
 	for name, provider := range bs.providers {
 		wg.Add(1)
 		go func(name string, provider BookingService) {
-			bookings, err := provider.MyBookings()
+			servicebookings, err := provider.MyBookings()
 			if err != nil {
 				incoming <- myBookingsResult{
 					bookings: nil,
@@ -109,6 +109,13 @@ func (bs *BookingAggregator) myBookings() ([]Booking, []*ServiceError) {
 					},
 				}
 				return
+			}
+			var bookings []Booking
+			for _, sb := range servicebookings {
+				bookings = append(bookings, Booking{
+					ServiceBooking: sb,
+					Provider:       name,
+				})
 			}
 			incoming <- myBookingsResult{
 				bookings: bookings,
@@ -129,7 +136,7 @@ func (bs *BookingAggregator) myBookings() ([]Booking, []*ServiceError) {
 	return bookings, errors
 }
 
-func (bs *BookingAggregator) Available(start time.Time, end time.Time) ([]Room, []*ServiceError) {
+func (bs *Directory) Available(start time.Time, end time.Time) ([]AvailableRoom, []*ServiceError) {
 	if len(bs.providers) == 0 {
 		return nil, []*ServiceError{
 			{
@@ -147,7 +154,7 @@ func (bs *BookingAggregator) Available(start time.Time, end time.Time) ([]Room, 
 	return rooms, errs
 }
 
-func (bs *BookingAggregator) available(start time.Time, end time.Time) ([]Room, []*ServiceError) {
+func (bs *Directory) available(start time.Time, end time.Time) ([]AvailableRoom, []*ServiceError) {
 	incoming := make(chan availableResult)
 
 	wg := sync.WaitGroup{}
@@ -159,7 +166,7 @@ func (bs *BookingAggregator) available(start time.Time, end time.Time) ([]Room, 
 	for name, provider := range bs.providers {
 		wg.Add(1)
 		go func(name string, provider BookingService) {
-			a, err := provider.Available(start, end)
+			roomNames, err := provider.Available(start, end)
 			if err != nil {
 				incoming <- availableResult{
 					available: nil,
@@ -170,14 +177,21 @@ func (bs *BookingAggregator) available(start time.Time, end time.Time) ([]Room, 
 				}
 				return
 			}
+			var available []AvailableRoom
+			for _, roomName := range roomNames {
+				available = append(available, AvailableRoom{
+					Provider: name,
+					Name:     roomName,
+				})
+			}
 			incoming <- availableResult{
-				available: a,
+				available: available,
 				err:       nil,
 			}
 		}(name, provider)
 	}
 
-	var rooms []Room
+	var rooms []AvailableRoom
 	var errors []*ServiceError
 	for result := range incoming {
 		wg.Done()

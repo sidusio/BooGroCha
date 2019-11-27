@@ -59,14 +59,14 @@ func (s *server) available(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bs := booking.NewBookingService(map[string]booking.BookingService{
+	bs := booking.NewDirectory(map[string]booking.BookingService{
 		"timeedit": cbs,
 	}, &fmtLog.Logger{})
 
 	rooms, errs := bs.Available(fromTime, toTime)
 
 	data, err := json.Marshal(struct {
-		Rooms  []booking.Room
+		Rooms  []booking.AvailableRoom
 		Errors []*booking.ServiceError
 	}{
 		Rooms:  rooms,
@@ -90,7 +90,7 @@ func (s *server) bookings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bs := booking.NewBookingService(map[string]booking.BookingService{
+	bs := booking.NewDirectory(map[string]booking.BookingService{
 		"timeedit": cbs,
 	}, &fmtLog.Logger{})
 
@@ -122,15 +122,15 @@ func (*server) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bs := booking.NewBookingService(map[string]booking.BookingService{
+	bs := booking.NewDirectory(map[string]booking.BookingService{
 		"timeedit": cbs,
 	}, &fmtLog.Logger{})
 
 	err = bs.UnBook(booking.Booking{
-		Room: booking.Room{
-			Provider: "timeedit",
+		ServiceBooking: booking.ServiceBooking{
+			Id:    bookingID,
 		},
-		Id: bookingID,
+		Provider: "timeedit",
 	})
 
 	data, err := json.Marshal(struct {
@@ -189,18 +189,18 @@ func (*server) book(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bs := booking.NewBookingService(map[string]booking.BookingService{
+	bs := booking.NewDirectory(map[string]booking.BookingService{
 		"timeedit": cbs,
 	}, &fmtLog.Logger{})
 
 	bookingId, err := bs.Book(booking.Booking{
-		Room: booking.Room{
-			Provider: data.Room.Provider,
-			Id:       data.Room.Id,
+		ServiceBooking: booking.ServiceBooking{
+			Room:  data.Room.Id,
+			Start: from,
+			End:   to,
+			Text:  data.Text,
 		},
-		Start: from,
-		End:   to,
-		Text:  data.Text,
+		Provider: data.Room.Provider,
 	})
 
 	response, jsonErr := json.Marshal(struct {

@@ -9,7 +9,7 @@ import (
 
 var listJSON bool
 
-func ListCmd(getBS func() booking.BookingService) *cobra.Command {
+func ListCmd(getBS func() *booking.Directory) *cobra.Command {
 	ListCmd := &cobra.Command{
 		Use:   "list",
 		Short: "List your current bookings",
@@ -24,7 +24,7 @@ func ListCmd(getBS func() booking.BookingService) *cobra.Command {
 	return ListCmd
 }
 
-func runList(cmd *cobra.Command, args []string, getBS func() booking.BookingService) {
+func runList(cmd *cobra.Command, args []string, getBS func() *booking.Directory) {
 	bookings, err := getBS().MyBookings()
 	if err != nil {
 		panic(err)
@@ -39,7 +39,7 @@ func runList(cmd *cobra.Command, args []string, getBS func() booking.BookingServ
 			fmt.Printf("%-7s %-13s %-15s %s\n",
 				date,
 				time,
-				booking.Room.Id,
+				booking.Room,
 				text,
 			)
 		}

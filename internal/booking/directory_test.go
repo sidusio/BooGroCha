@@ -182,7 +182,7 @@ func TestBookingService_Book(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bs := BookingAggregator{
+			bs := Directory{
 				providers: tt.fields.services,
 				log:       tt.fields.log,
 			}
@@ -296,7 +296,7 @@ func TestBookingService_UnBook(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := BookingAggregator{
+			b := Directory{
 				providers: tt.fields.services,
 				log:       tt.fields.log,
 			}
@@ -387,7 +387,7 @@ func TestBookingService_MyBookings(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := BookingAggregator{
+			b := Directory{
 				providers: tt.fields.services,
 				log:       tt.fields.log,
 			}
@@ -451,7 +451,7 @@ func TestBookingService_myBookings(t *testing.T) {
 		}
 	}
 
-	bs := NewBookingService(services, &fmtLog.Logger{})
+	bs := NewDirectory(services, &fmtLog.Logger{})
 
 	bookings, errors := bs.myBookings()
 
@@ -531,7 +531,7 @@ func TestBookingService_Available(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bs := &BookingAggregator{
+			bs := &Directory{
 				providers: tt.fields.services,
 				log:       tt.fields.log,
 			}
@@ -577,7 +577,7 @@ func TestBookingService_available(t *testing.T) {
 		}
 	}
 
-	bs := NewBookingService(services, &fmtLog.Logger{})
+	bs := NewDirectory(services, &fmtLog.Logger{})
 
 	rooms, errors := bs.available(time.Time{}, time.Time{})
 

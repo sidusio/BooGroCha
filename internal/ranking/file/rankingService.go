@@ -9,7 +9,7 @@ import (
 )
 
 type rankedRoom struct {
-	Room booking.Room
+	Room booking.AvailableRoom
 	Rank uint64
 }
 

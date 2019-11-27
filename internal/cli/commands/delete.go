@@ -12,7 +12,7 @@ import (
 
 var deleteAll bool
 
-func DeleteCmd(getBS func() booking.BookingService) *cobra.Command {
+func DeleteCmd(getBS func() *booking.Directory) *cobra.Command {
 	DeleteCmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Delete a booking",
@@ -26,11 +26,11 @@ func DeleteCmd(getBS func() booking.BookingService) *cobra.Command {
 	return DeleteCmd
 }
 
-func runDelete(cmd *cobra.Command, args []string, getBS func() booking.BookingService) {
+func runDelete(cmd *cobra.Command, args []string, getBS func() *booking.Directory) {
 	bs := getBS()
-	bookings, err := bs.MyBookings()
-	if err != nil {
-		panic(err)
+	bookings, sErrs := bs.MyBookings()
+	if sErrs != nil {
+		panic(sErrs)
 	}
 
 	fmt.Printf("    %-7s %-13s %-15s %s\n", "DATE", "TIME", "ROOM", "TEXT")
@@ -42,7 +42,7 @@ func runDelete(cmd *cobra.Command, args []string, getBS func() booking.BookingSe
 			i+1,
 			date,
 			time,
-			booking.Room.Id,
+			booking.Room,
 			text,
 		)
 	}

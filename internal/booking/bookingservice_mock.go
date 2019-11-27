@@ -7,57 +7,57 @@ import (
 
 type MockErrorService struct{}
 
-func (*MockErrorService) Book(booking Booking) error {
+func (*MockErrorService) Book(booking ServiceBooking) error {
 	return fmt.Errorf("mock error")
 }
 
-func (*MockErrorService) UnBook(booking Booking) error {
+func (*MockErrorService) UnBook(ServiceBooking ServiceBooking) error {
 	return fmt.Errorf("mock error")
 }
 
-func (*MockErrorService) MyBookings() ([]Booking, error) {
+func (*MockErrorService) MyBookings() ([]ServiceBooking, error) {
 	return nil, fmt.Errorf("mock error")
 }
 
-func (*MockErrorService) Available(start time.Time, end time.Time) ([]Room, error) {
+func (*MockErrorService) Available(start time.Time, end time.Time) ([]string, error) {
 	return nil, fmt.Errorf("mock error")
 }
 
 type MockStaticService struct {
-	bookings []Booking
-	rooms    []Room
+	bookings []ServiceBooking
+	rooms    []string
 }
 
-func NewMockStaticService(bookings []Booking, rooms []Room) *MockStaticService {
+func NewMockStaticService(bookings []ServiceBooking, rooms []string) *MockStaticService {
 	return &MockStaticService{bookings: bookings, rooms: rooms}
 }
 
-func (*MockStaticService) Book(booking Booking) error {
+func (*MockStaticService) Book(booking ServiceBooking) error {
 	return nil
 }
 
-func (*MockStaticService) UnBook(booking Booking) error {
+func (*MockStaticService) UnBook(booking ServiceBooking) error {
 	return nil
 }
 
-func (ms *MockStaticService) MyBookings() ([]Booking, error) {
+func (ms *MockStaticService) MyBookings() ([]ServiceBooking, error) {
 	return ms.bookings, nil
 }
 
-func (ms *MockStaticService) Available(start time.Time, end time.Time) ([]Room, error) {
+func (ms *MockStaticService) Available(start time.Time, end time.Time) ([]string, error) {
 	return ms.rooms, nil
 }
 
 type MockService struct {
-	Bookings map[Room]*Booking
-	Rooms    []Room
+	Bookings map[string]*ServiceBooking
+	Rooms    []string
 }
 
-func NewMockService(rooms []Room) *MockService {
-	return &MockService{Bookings: make(map[Room]*Booking), Rooms: rooms}
+func NewMockService(rooms []string) *MockService {
+	return &MockService{Bookings: make(map[string]*ServiceBooking), Rooms: rooms}
 }
 
-func (bs *MockService) Book(b Booking) error {
+func (bs *MockService) Book(b ServiceBooking) error {
 	if bs.Bookings[b.Room] != nil {
 		return fmt.Errorf("room already booked")
 	}
@@ -66,7 +66,7 @@ func (bs *MockService) Book(b Booking) error {
 	return nil
 }
 
-func (bs *MockService) UnBook(b Booking) error {
+func (bs *MockService) UnBook(b ServiceBooking) error {
 	if bs.Bookings[b.Room] == nil {
 		return fmt.Errorf("room not booked")
 	}
@@ -75,16 +75,16 @@ func (bs *MockService) UnBook(b Booking) error {
 	return nil
 }
 
-func (bs *MockService) MyBookings() ([]Booking, error) {
-	var bookings []Booking
+func (bs *MockService) MyBookings() ([]ServiceBooking, error) {
+	var bookings []ServiceBooking
 	for _, v := range bs.Bookings {
 		bookings = append(bookings, *v)
 	}
 	return bookings, nil
 }
 
-func (bs *MockService) Available(start time.Time, end time.Time) ([]Room, error) {
-	var available []Room
+func (bs *MockService) Available(start time.Time, end time.Time) ([]string, error) {
+	var available []string
 	for _, room := range bs.Rooms {
 		if bs.Bookings[room] == nil {
 			available = append(available, room)

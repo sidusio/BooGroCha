@@ -5,9 +5,14 @@ import (
 )
 
 type Booking struct {
-	Room  Room
-	Start time.Time
-	End   time.Time
-	Text  string
-	Id    string
+	ServiceBooking
+	Provider string
+}
+
+type ServiceBooking struct {
+	Room     string
+	Start    time.Time
+	End      time.Time
+	Text     string
+	Id       string
 }

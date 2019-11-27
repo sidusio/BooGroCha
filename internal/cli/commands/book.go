@@ -13,7 +13,7 @@ import (
 	"sidus.io/boogrocha/internal/ranking"
 )
 
-func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingService) *cobra.Command {
+func BookCmd(getBS func() *booking.Directory, getRS func() ranking.RankingService) *cobra.Command {
 	return &cobra.Command{
 		Use:   "book {day} {time}",
 		Short: "Create a booking",
@@ -30,14 +30,14 @@ func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingSe
 	}
 }
 
-func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService, getRS func() ranking.RankingService) {
+func run(cmd *cobra.Command, args []string, getBS func() *booking.Directory, getRS func() ranking.RankingService) {
 	bs := getBS()
 
 	startDate, endDate := readArgs(args)
 
-	available, err := bs.Available(startDate, endDate)
-	if err != nil {
-		fmt.Println(err)
+	available, sErrs := bs.Available(startDate, endDate)
+	if sErrs != nil {
+		fmt.Println(sErrs)
 		os.Exit(1)
 	}
 
@@ -45,9 +45,8 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 	rankings, err := rs.GetRankings()
 	if err != nil {
 		fmt.Printf("Failed to get rankings: %v\n", err)
-	} else {
-		available = rankings.Sort(available)
 	}
+	available = rankings.Sort(available)
 
 	showAvailable(available)
 
@@ -63,19 +62,22 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 	message := prompt("Message to add with the booking (default: empty)")
 
 	if n < len(available) && n >= 0 {
-		fmt.Printf("Booking %s...\n", available[n].Id)
+		fmt.Printf("Booking %s...\n", available[n].Name)
 		booking := booking.Booking{
-			Room:  available[n],
-			Start: startDate,
-			End:   endDate,
-			Text:  message,
+			ServiceBooking: booking.ServiceBooking{
+				Room:  available[n].Name,
+				Start: startDate,
+				End:   endDate,
+				Text:  message,
+			},
+			Provider: available[n].Provider,
 		}
 		_, err := bs.Book(booking)
 		if err != nil {
 			fmt.Println("couldn't book room")
 			os.Exit(1)
 		}
-		fmt.Printf("Booked %s successfully!\n", available[n].Id)
+		fmt.Printf("Booked %s successfully!\n", available[n].Name)
 
 		if rankings != nil {
 			rankings.Update(available[n], available)
@@ -118,15 +120,16 @@ func readArgs(args []string) (time.Time, time.Time) {
 	return date.Add(start), date.Add(end)
 }
 
-func showAvailable(available []booking.Room) {
+// TODO: Fix broken sorting logic
+func showAvailable(available []booking.AvailableRoom) {
 	for i := len(available) - 1; i >= 0; i-- {
 		room := available[i]
 
-		prevIsSame := i > 0 && available[i-1].Id == room.Id
-		nextIsSame := i < len(available)-1 && available[i+1].Id == room.Id
-		roomName := room.Id
+		prevIsSame := i > 0 && available[i-1].Name == room.Name
+		nextIsSame := i < len(available)-1 && available[i+1].Name == room.Name
+		roomName := room.Name
 		if prevIsSame || nextIsSame {
-			roomName = fmt.Sprintf("%s.%s", room.Provider, room.Id)
+			roomName = fmt.Sprintf("%s.%s", room.Provider, room.Name)
 		}
 
 		fmt.Printf("%4s %-7s\n",
