@@ -7,8 +7,8 @@ import (
 
 type MockErrorService struct{}
 
-func (*MockErrorService) Book(booking ServiceBooking) error {
-	return fmt.Errorf("mock error")
+func (*MockErrorService) Book(booking ServiceBooking) (string, error) {
+	return "", fmt.Errorf("mock error")
 }
 
 func (*MockErrorService) UnBook(ServiceBooking ServiceBooking) error {
@@ -32,8 +32,8 @@ func NewMockStaticService(bookings []ServiceBooking, rooms []string) *MockStatic
 	return &MockStaticService{bookings: bookings, rooms: rooms}
 }
 
-func (*MockStaticService) Book(booking ServiceBooking) error {
-	return nil
+func (*MockStaticService) Book(booking ServiceBooking) (string, error) {
+	return "1", nil
 }
 
 func (*MockStaticService) UnBook(booking ServiceBooking) error {
@@ -57,13 +57,13 @@ func NewMockService(rooms []string) *MockService {
 	return &MockService{Bookings: make(map[string]*ServiceBooking), Rooms: rooms}
 }
 
-func (bs *MockService) Book(b ServiceBooking) error {
+func (bs *MockService) Book(b ServiceBooking) (string, error) {
 	if bs.Bookings[b.Room] != nil {
-		return fmt.Errorf("room already booked")
+		return "", fmt.Errorf("room already booked")
 	}
 
 	bs.Bookings[b.Room] = &b
-	return nil
+	return b.Room, nil
 }
 
 func (bs *MockService) UnBook(b ServiceBooking) error {
