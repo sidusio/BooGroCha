@@ -212,7 +212,7 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 	}
 
 	// Populate form with username and password
-	form.Values.Add("UserName", cid+"@net.chalmers.se")
+	form.Values.Add("UserName", toUsername(cid))
 	form.Values.Add("Password", pass)
 
 	// Submit login form
@@ -347,4 +347,11 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 	}
 
 	return rs, nil
+}
+
+func toUsername(cid string) string {
+	if strings.Contains(cid, "@net.chalmers.se") {
+		return cid
+	}
+	return cid + "@net.chalmers.se"
 }
