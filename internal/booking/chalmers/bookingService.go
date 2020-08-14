@@ -3,22 +3,23 @@ package chalmers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"sidus.io/boogrocha/internal/booking"
 	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/publicsuffix"
+	"sidus.io/boogrocha/internal/booking"
 )
 
-const samelURL = "https://se.timeedit.net/web/chalmers/db1/timeedit/sso/saml2?back=https%3A%2F%2Fcloud.timeedit.net%2Fchalmers%2Fweb%2Fb1%2F"
+const samelURL = "https://cloud.timeedit.net/chalmers_test/web/timeedit/sso/saml2_test?back=https%3A%2F%2Fcloud.timeedit.net%2Fchalmers_test%2Fweb%2Fb1%2F"
 const bookURL = "https://cloud.timeedit.net/chalmers/web/b1/ri1Q5008.html"
-const objectsURL = "https://cloud.timeedit.net/chalmers/web/b1/objects.json?part=t&types=186&step=1"
-const bookingsURL = "https://cloud.timeedit.net/chalmers/web/b1/my.html"
+const objectsURL = "https://cloud.timeedit.net/chalmers_test/web/b1/objects.json?part=t&types=186&step=1"
+const bookingsURL = "https://cloud.timeedit.net/chalmers_test/web/b1/my.html"
 const otherPurpose = "203460.192"
 const providerName = "ChalmersTimeEdit"
 
@@ -133,11 +134,11 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 				Text:  text,
 				Start: startTime,
 				End:   endTime,
-				Room:  booking.Room{
+				Room: booking.Room{
 					Provider: providerName,
 					Id:       roomInfo,
 				},
-				Id:    id,
+				Id: id,
 			})
 		}
 	}
@@ -204,15 +205,15 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 	}
 
 	// Extract login form from request to cover XSS prevention values
-	form, err := getForm(resp, "form")
+	form, err := getForm(resp, "#loginForm")
 	_ = resp.Body.Close()
 	if err != nil {
 		return BookingService{}, err
 	}
 
 	// Populate form with username and password
-	form.Values.Add("ctl00$ContentPlaceHolder1$UsernameTextBox", cid)
-	form.Values.Add("ctl00$ContentPlaceHolder1$PasswordTextBox", pass)
+	form.Values.Add("UserName", toUsername(cid))
+	form.Values.Add("Password", pass)
 
 	// Submit login form
 	resp, err = form.Post(client)
@@ -254,7 +255,7 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 	}
 	success = false
 	for _, cookie := range jar.Cookies(u) {
-		if cookie.Name == "TEchalmersweb" {
+		if cookie.Name == "TEchalmers_testweb" {
 			success = true
 			break
 		}
@@ -346,4 +347,11 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 	}
 
 	return rs, nil
+}
+
+func toUsername(cid string) string {
+	if strings.Contains(cid, "@net.chalmers.se") {
+		return cid
+	}
+	return cid + "@net.chalmers.se"
 }
