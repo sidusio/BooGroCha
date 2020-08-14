@@ -3,16 +3,17 @@ package chalmers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"sidus.io/boogrocha/internal/booking"
 	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/net/publicsuffix"
+	"sidus.io/boogrocha/internal/booking"
 )
 
 const samelURL = "https://cloud.timeedit.net/chalmers_test/web/timeedit/sso/saml2_test?back=https%3A%2F%2Fcloud.timeedit.net%2Fchalmers_test%2Fweb%2Fb1%2F"
@@ -133,11 +134,11 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 				Text:  text,
 				Start: startTime,
 				End:   endTime,
-				Room:  booking.Room{
+				Room: booking.Room{
 					Provider: providerName,
 					Id:       roomInfo,
 				},
-				Id:    id,
+				Id: id,
 			})
 		}
 	}
@@ -211,7 +212,7 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 	}
 
 	// Populate form with username and password
-	form.Values.Add("UserName", cid + "@net.chalmers.se")
+	form.Values.Add("UserName", cid+"@net.chalmers.se")
 	form.Values.Add("Password", pass)
 
 	// Submit login form
