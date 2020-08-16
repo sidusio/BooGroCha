@@ -17,7 +17,7 @@ import (
 )
 
 const samelURL = "https://cloud.timeedit.net/chalmers_test/web/timeedit/sso/saml2_test?back=https%3A%2F%2Fcloud.timeedit.net%2Fchalmers_test%2Fweb%2Fb1%2F"
-const bookURL = "https://cloud.timeedit.net/chalmers/web/b1/ri1Q5008.html"
+const bookURL = "https://cloud.timeedit.net/chalmers_test/web/b1/ri1Q5008.html"
 const objectsURL = "https://cloud.timeedit.net/chalmers_test/web/b1/objects.json?part=t&types=186&step=1"
 const bookingsURL = "https://cloud.timeedit.net/chalmers_test/web/b1/my.html"
 const otherPurpose = "203460.192"
