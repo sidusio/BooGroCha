@@ -120,7 +120,7 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 
 			roomInfo := strings.Split(tr.Find(".column0").Text(), ", ")[0]
 
-			startTime, endTime, err := getBookingPeriod(tr)
+			startTime, endTime, err := getBookingPeriod(tr, selectedDate)
 			if err != nil {
 				return nil, err
 			}
@@ -356,7 +356,7 @@ func toUsername(cid string) string {
 	return cid + "@net.chalmers.se"
 }
 
-func getBookingPeriod(tr *goquery.Selection) (time.Time, time.Time, error) {
+func getBookingPeriod(tr *goquery.Selection, selectedDate string) (time.Time, time.Time, error) {
 	timeInfo := tr.Find(".time").Text()
 
 	timeStrings := strings.Split(timeInfo, " - ")
