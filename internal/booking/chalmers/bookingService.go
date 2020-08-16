@@ -89,8 +89,10 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 		return nil, err
 	}
 
+	// Find the table with the bookings in
 	selections := doc.Find("body #texttable table tr")
 
+	// The important information starts on the third row
 	trs := make([]*goquery.Selection, selections.Length()-2)
 	selections.Each(func(i int, selection *goquery.Selection) {
 		if i >= 2 {
@@ -100,10 +102,14 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 	bookings := make([]booking.Booking, 0, 4)
 	selectedDate := ""
 	for _, tr := range trs {
-		headline := tr.Find(".headline.leftRounded.t")
+		// Check if the row is a date row
+		headline := tr.Find(".headline.t")
 		if headline.Length() > 0 {
-			selectedDate = strings.Split(headline.Text(), " ")[1]
+			// If it is a date row we extract the date and move to the next row
+			text := headline.Text()
+			selectedDate = strings.Split(text, " ")[1]
 		} else {
+			// If it isn't and we have no selected date somethings wrong
 			if selectedDate == "" {
 				return nil, fmt.Errorf("parsing failure")
 			}
@@ -112,17 +118,11 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 				return nil, fmt.Errorf("parsing failure")
 			}
 
-			timeInfo := tr.Find(".time").Text()
 			roomInfo := strings.Split(tr.Find(".column0").Text(), ", ")[0]
 
-			timeStrings := strings.Split(timeInfo, " - ")
-			startTime, err := time.Parse("2006-01-02T15:04", fmt.Sprintf("%sT%s", selectedDate, timeStrings[0]))
+			startTime, endTime, err := getBookingPeriod(tr)
 			if err != nil {
-				return nil, fmt.Errorf("parsing failure")
-			}
-			endTime, err := time.Parse("2006-01-02T15:04", fmt.Sprintf("%sT%s", selectedDate, timeStrings[1]))
-			if err != nil {
-				return nil, fmt.Errorf("parsing failure")
+				return nil, err
 			}
 
 			text, err := bs.getText(id)
@@ -354,4 +354,19 @@ func toUsername(cid string) string {
 		return cid
 	}
 	return cid + "@net.chalmers.se"
+}
+
+func getBookingPeriod(tr *goquery.Selection) (time.Time, time.Time, error) {
+	timeInfo := tr.Find(".time").Text()
+
+	timeStrings := strings.Split(timeInfo, " - ")
+	startTime, err := time.Parse("2006-01-02T15:04", fmt.Sprintf("%sT%s", selectedDate, timeStrings[0]))
+	if err != nil {
+		return time.Time{}, time.Time{}, fmt.Errorf("parsing failure")
+	}
+	endTime, err := time.Parse("2006-01-02T15:04", fmt.Sprintf("%sT%s", selectedDate, timeStrings[1]))
+	if err != nil {
+		return time.Time{}, time.Time{}, fmt.Errorf("parsing failure")
+	}
+	return startTime, endTime, nil
 }
