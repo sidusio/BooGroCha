@@ -1,5 +1,5 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/williamleven/BooGroCha)](https://goreportcard.com/report/github.com/williamleven/BooGroCha)
-[![Build Status](https://travis-ci.com/williamleven/BooGroCha.svg?branch=master)](https://travis-ci.com/williamleven/BooGroCha)
+[![Build Status](https://travis-ci.com/sidusIO/BooGroCha.svg?branch=master)](https://travis-ci.com/siduIO/BooGroCha)
 # BooGroCha
 A CLI client for chalmers' group room booking system.
 
