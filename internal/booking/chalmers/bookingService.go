@@ -183,6 +183,8 @@ func (bs BookingService) Available(start time.Time, end time.Time) ([]booking.Ro
 		result = append(result, booking.Room{
 			Provider: providerName,
 			Id:       room.Name,
+			Seats:    room.Seats,
+			Campus:   room.Campus,
 		})
 	}
 	return result, nil
@@ -287,6 +289,35 @@ func printCookies(jar http.CookieJar, u string) {
 	}
 }
 
+func (bs BookingService) generateRoomInfo(rs rooms) rooms {
+	var roomInfos map[string]struct {
+		Seats  int    `json:"seats"`
+		Campus string `json:"campus"`
+	}
+
+	resp, err := bs.client.Get("https://boogrocha.sidus.io/rooms.json")
+	if err != nil {
+		return rs
+	}
+	jsonBytes, err := ioutil.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if err != nil {
+		return rs
+	}
+
+	err = json.Unmarshal(jsonBytes, &roomInfos)
+	if err != nil {
+		return rs
+	}
+
+	for i, r := range rs {
+		rs[i].Seats = roomInfos[r.Name].Seats
+		rs[i].Campus = roomInfos[r.Name].Campus
+	}
+
+	return rs
+}
+
 func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 	var jsonResponse struct {
 		HasMore bool `json:"hasMore"`
@@ -345,6 +376,8 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 			break
 		}
 	}
+
+	rs = bs.generateRoomInfo(rs)
 
 	return rs, nil
 }
