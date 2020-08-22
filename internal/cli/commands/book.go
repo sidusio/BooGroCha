@@ -13,7 +13,11 @@ import (
 	"sidus.io/boogrocha/internal/ranking"
 )
 
+const MaxInt = int(^uint(0) >> 1)
+
 var filterOnCampus string
+var filterOnMaxRoomSize int
+var filterOnMinRoomSize int
 
 type roomFilter func(booking.Room) bool
 
@@ -33,6 +37,8 @@ func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingSe
 		},
 	}
 	bookCmd.Flags().StringVarP(&filterOnCampus, "campus", "c", "", "Show only rooms from either (J)ohanneberg or (L)indholmen")
+	bookCmd.Flags().IntVarP(&filterOnMaxRoomSize, "max_size", "M", MaxInt, "Show only rooms with (<=) this amount of seats")
+	bookCmd.Flags().IntVarP(&filterOnMinRoomSize, "min_size", "m", 0, "Show only rooms with (>=) this amount of seats")
 
 	return bookCmd
 }
@@ -56,12 +62,11 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 		available = rankings.Sort(available)
 	}
 
-	var filters []roomFilter
-	if filterOnCampus != "" {
-		filters = append(filters, isOnCampus)
-	}
-
-	available = filterRooms(available, filters)
+	available = filterRooms(available, []roomFilter{
+		hasMaxSeats,
+		hasMinSeats,
+		isOnCampus,
+	})
 
 	showAvailable(available)
 
@@ -145,6 +150,14 @@ func isOnCampus(room booking.Room) bool {
 		return string(strings.ToLower(room.Campus)[0]) == strings.ToLower(filterOnCampus)
 	}
 	return strings.ToLower(room.Campus) == strings.ToLower(filterOnCampus)
+}
+
+func hasMaxSeats(room booking.Room) bool {
+	return room.Seats <= filterOnMaxRoomSize
+}
+
+func hasMinSeats(room booking.Room) bool {
+	return room.Seats >= filterOnMinRoomSize
 }
 
 func prompt(message string) (string, error) {
