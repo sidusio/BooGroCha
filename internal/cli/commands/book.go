@@ -3,17 +3,22 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
-	"sidus.io/boogrocha/internal/booking"
-	"sidus.io/boogrocha/internal/ranking"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
+	"sidus.io/boogrocha/internal/booking"
+	"sidus.io/boogrocha/internal/ranking"
 )
 
+var filterOnCampus string
+
+type roomFilter func(booking.Room) bool
+
 func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingService) *cobra.Command {
-	return &cobra.Command{
+	bookCmd := &cobra.Command{
 		Use:   "book {day} {time}",
 		Short: "Create a booking",
 		Long:  "",
@@ -27,6 +32,9 @@ func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingSe
 			return nil
 		},
 	}
+	bookCmd.Flags().StringVarP(&filterOnCampus, "campus", "c", "", "Show only rooms from either (J)ohanneberg or (L)indholmen")
+
+	return bookCmd
 }
 
 func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService, getRS func() ranking.RankingService) {
@@ -47,6 +55,13 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 	} else {
 		available = rankings.Sort(available)
 	}
+
+	var filters []roomFilter
+	if filterOnCampus != "" {
+		filters = append(filters, isOnCampus)
+	}
+
+	available = filterRooms(available, filters)
 
 	showAvailable(available)
 
@@ -98,6 +113,40 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 	}
 }
 
+func filterRooms(rs []booking.Room, fs []roomFilter) []booking.Room {
+	return filter(rs, func(r booking.Room) bool {
+		for _, f := range fs {
+			if !f(r) {
+				return false
+			}
+		}
+		return true
+	})
+}
+
+func filter(xs []booking.Room, f roomFilter) []booking.Room {
+	var ys []booking.Room
+	for _, x := range xs {
+		if f(x) {
+			ys = append(ys, x)
+		}
+	}
+	return ys
+}
+
+func isOnCampus(room booking.Room) bool {
+	if filterOnCampus == "" {
+		return true
+	}
+	if len(room.Campus) == 0 {
+		return false
+	}
+	if len(filterOnCampus) == 1 {
+		return string(strings.ToLower(room.Campus)[0]) == strings.ToLower(filterOnCampus)
+	}
+	return strings.ToLower(room.Campus) == strings.ToLower(filterOnCampus)
+}
+
 func prompt(message string) (string, error) {
 	fmt.Printf("==> %s\n", message)
 	fmt.Print("==> ")
@@ -131,7 +180,7 @@ func showAvailable(available []booking.Room) {
 		room := available[i]
 
 		prevIsSame := i > 0 && available[i-1].Id == room.Id
-		nextIsSame := i < len(available) - 1 && available[i+1].Id == room.Id
+		nextIsSame := i < len(available)-1 && available[i+1].Id == room.Id
 		roomName := room.Id
 		if prevIsSame || nextIsSame {
 			roomName = fmt.Sprintf("%s.%s", room.Provider, room.Id)
