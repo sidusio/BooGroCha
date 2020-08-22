@@ -3,8 +3,10 @@ package chalmers
 import "fmt"
 
 type room struct {
-	Name string `json:"fields.Lokalsignatur"`
-	Id   string `json:"idAndType"`
+	Name   string `json:"fields.Lokalsignatur"`
+	Id     string `json:"idAndType"`
+	Seats  int    `json:"seats"`
+	Campus string `json:"campus"`
 }
 
 type rooms []room
