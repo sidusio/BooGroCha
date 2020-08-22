@@ -30,7 +30,8 @@ func runDelete(cmd *cobra.Command, args []string, getBS func() booking.BookingSe
 	bs := getBS()
 	bookings, err := bs.MyBookings()
 	if err != nil {
-		panic(err)
+		fmt.Printf("Failed to get bookings: %v \n", err)
+		os.Exit(1)
 	}
 
 	fmt.Printf("    %-7s %-13s %-15s %s\n", "DATE", "TIME", "ROOM", "TEXT")
@@ -54,7 +55,7 @@ func runDelete(cmd *cobra.Command, args []string, getBS func() booking.BookingSe
 
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		panic(err)
+		fmt.Printf("While getting input: %v }\n", err)
 	}
 	input = strings.Replace(input, "\n", "", -1)
 
