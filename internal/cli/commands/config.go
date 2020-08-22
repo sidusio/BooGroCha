@@ -3,12 +3,13 @@ package commands
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"strings"
 	"syscall"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 func ConfigCmd(getSavePassword func() func(string) error) *cobra.Command {
@@ -21,6 +22,7 @@ func ConfigCmd(getSavePassword func() func(string) error) *cobra.Command {
 
 	cmd.AddCommand(configGetCmd)
 	cmd.AddCommand(configSetCmd(getSavePassword))
+	cmd.AddCommand(configClearCmd(getSavePassword))
 
 	return cmd
 }
@@ -28,6 +30,7 @@ func ConfigCmd(getSavePassword func() func(string) error) *cobra.Command {
 var validGetArgs = []string{"campus", "cid"}
 var validSetArgs = append(validGetArgs, "pass")
 var validCampuses = []string{"johanneberg", "lindholmen"}
+var validClearArgs = validSetArgs
 
 func configSetCmd(getSavePassword func() func(string) error) *cobra.Command {
 	return &cobra.Command{
@@ -105,6 +108,39 @@ func setConfig(cmd *cobra.Command, args []string, getSavePassword func() func(st
 	}
 	// Set and save config options
 	viper.Set(fmt.Sprintf("chalmers.%s", args[0]), value)
+	err := viper.WriteConfig()
+	if err != nil {
+		fmt.Printf("Failed to write to config: %s\n", err.Error())
+		os.Exit(1)
+	}
+}
+
+func configClearCmd(getSavePassword func() func(string) error) *cobra.Command {
+	return &cobra.Command{
+		Use:   fmt.Sprintf("clear {%s}", strings.Join(validClearArgs, "|")),
+		Short: "Clear config option",
+		Long:  "Clear config option.",
+		Run: func(cmd *cobra.Command, args []string) {
+			clearConfig(cmd, args, getSavePassword)
+		},
+		ValidArgs: validSetArgs,
+		Args:      cobra.ExactValidArgs(1),
+	}
+}
+
+func clearConfig(_ *cobra.Command, args []string, getSavePassword func() func(string) error) {
+	if args[0] == "pass" {
+		savePassword := getSavePassword()
+		if savePassword != nil {
+			err := savePassword("")
+			if err != nil {
+				fmt.Printf("Failed to clear password: %s\n", err.Error())
+				os.Exit(1)
+			}
+		}
+	}
+	// Clear and save config options
+	viper.Set(fmt.Sprintf("chalmers.%s", args[0]), "")
 	err := viper.WriteConfig()
 	if err != nil {
 		fmt.Printf("Failed to write to config: %s\n", err.Error())
