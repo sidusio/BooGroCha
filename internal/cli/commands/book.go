@@ -50,16 +50,25 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 
 	showAvailable(available)
 
-	room := prompt("Room to book")
+	room, err := prompt("Room to book")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	n, err := strconv.Atoi(room)
 	n--
 	if err != nil {
-		fmt.Printf("invalid booking\n")
+		fmt.Printf("Invalid Room\n")
 		os.Exit(1)
 	}
 
-	message := prompt("Message to add with the booking (default: empty)")
+	message, err := prompt("Message to add with the booking (default: empty)")
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("No booking was made")
+		os.Exit(1)
+	}
 
 	if n < len(available) && n >= 0 {
 		fmt.Printf("Booking %s...\n", available[n].Id)
@@ -89,7 +98,7 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 	}
 }
 
-func prompt(message string) string {
+func prompt(message string) (string, error) {
 	fmt.Printf("==> %s\n", message)
 	fmt.Print("==> ")
 
@@ -97,9 +106,9 @@ func prompt(message string) string {
 
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("while getting input: %w", err)
 	}
-	return strings.Replace(input, "\n", "", -1)
+	return strings.Replace(input, "\n", "", -1), nil
 }
 
 func readArgs(args []string) (time.Time, time.Time) {

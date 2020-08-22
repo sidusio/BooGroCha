@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"sidus.io/boogrocha/internal/booking"
@@ -28,7 +29,8 @@ func ListCmd(getBS func() booking.BookingService) *cobra.Command {
 func runList(cmd *cobra.Command, args []string, getBS func() booking.BookingService) {
 	bookings, err := getBS().MyBookings()
 	if err != nil {
-		panic(err)
+		fmt.Printf("Failed to get bookings: %v \n", err)
+		os.Exit(1)
 	}
 
 	if !listJSON {

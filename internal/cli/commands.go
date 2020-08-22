@@ -28,7 +28,8 @@ func init() {
 
 	err = bindFlags()
 	if err != nil {
-		panic(err)
+		fmt.Printf("Failed to bind flags: %v \n", err)
+		os.Exit(1)
 	}
 }
 
