@@ -16,7 +16,7 @@ func getKeyRingPassword(key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	pass, err := keyring.Search(KeyringName)
+	pass, err := keyring.Search(key)
 	notSaved := err != nil && err.Error() == "required key not available"
 	if notSaved {
 		return "", fmt.Errorf("not saved")
@@ -31,10 +31,29 @@ func getKeyRingPassword(key string) (string, error) {
 }
 
 func saveKeyRingPassword(key, pass string) error {
+	// Setting a key to "" will result in crash, clear instead
+	if pass == "" {
+		return clearKeyringPassword(key)
+	}
 	keyring, err := keyctl.SessionKeyring()
 	if err != nil {
 		return err
 	}
 	_, err = keyring.Add(key, []byte(pass))
 	return err
+}
+
+func clearKeyringPassword(key string) error {
+	keyring, err := keyctl.SessionKeyring()
+	if err != nil {
+		return err
+	}
+	pass, err := keyring.Search(key)
+	if err != nil {
+		if err.Error() == "required key not available" {
+			return nil
+		}
+		return err
+	}
+	return pass.Unlink()
 }
