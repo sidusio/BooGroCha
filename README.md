@@ -75,22 +75,3 @@ $ bgc config set <variable> <value>
 $ bgc config get <variable>
 ```
 * **\<variable\>** can for example be `cid` or `campus` (NOTE: You cannot show the `pass` variable this way)
-
-## Development
-
-```bash
-$ git clone https://github.com/williamleven/BooGroCha
-$ cd BooGroCha/cmd/bgc
-$ go build
-$ ./bgc ...
-```
-
-### GoLand
-At the moment of writing (version 2018.3.5) GoLand doesn't support go modules in a project by default.
-Instead you have to tick the `Enable Go Modules (vgo) integration` under `Settings -> Go -> Go Modules (vgo)` and set the proxy setting to `direct`.
-
-### Contribution
-This is a open project so feel free to contribute with code and/or ideas in issues and pull requests.
-
-#### Structure
-In this project we have decided on [a specific project structure](https://github.com/golang-standards/project-layout) and would like you to follow this structure as well when contributing code to the project.
