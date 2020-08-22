@@ -69,6 +69,11 @@ $ bgc config set <variable> <value>
 * **\<variable\>** can for example be `cid` or `pass`
 * **\<value\>** should be the value that you want to set the variable to (NOTE: when setting the password you will be prompted for input instead of setting it directly)
 
+#### Clearing a variable
+```bash
+$ bgc config clear <variable>
+```
+* **\<variable\>** can for example be `cid` or `pass`
 
 #### Showing a variable
 ```bash
