@@ -42,11 +42,15 @@ $ go install
 Allows for booking rooms by showing the available rooms for the given date and time.
 
 ```bash
-$ bgc book <date> <time> [options]
+$ bgc book <date> <time>
 ```
 * **\<date\>** can be either an absolute date (`YYYYMMDD`, `YYMMDD`) or a relative date (`MMDD`, `DD`, `D`, `today`, `tomorrow`, `monday`, `tuesday` ...)
 * **\<time\>** can be either (`HH:mm-HH:mm`, `HH-HH`, `H-H`, `H-HH`, `HH-H`) or aliases like `lunch`
-* **[options]** could be `--cid <cid>` for specifying a cid to use, `-c [J|L]` for specifying a campus, `-m <min room size>` or `-M <max room size>` for specifying the size of the room
+
+The `book` sub-command also takes the following optional flags:
+* `--cid <cid>` to perform the book request with a specified cid
+* `--campus <campus>` or `-c <campus>` to filter the available rooms by a specified campus. (Valid campuses are `J`, `Johanneberg`, `L` and `Lindholmen`. Note that these values are not case-sensitive)
+* `--size <size>` or `-s <size>` to filter the available rooms by size and will only show the rooms that are big enough. (When a size is specified the list of available rooms will also show the capacity of each room)
 
 ### List booked rooms
 
