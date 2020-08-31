@@ -26,12 +26,7 @@ func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingSe
 		Use:   "book {day} {time}",
 		Short: "Create a booking",
 		Long:  "",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if a := len(args); a > 2 || a == 1 {
-				return fmt.Errorf("wrong number of arguments")
-			}
-			return nil
-		},
+		Args:  cobra.ExactArgs(2),
 	}
 
 	campus := *bookCmd.Flags().StringP(CampusFlagName, "c", CampusFlagDefaultValue, "Show only rooms from either (J)ohanneberg or (L)indholmen")
