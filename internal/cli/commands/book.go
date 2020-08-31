@@ -8,18 +8,18 @@ import (
 	"strings"
 	"time"
 
+	"sidus.io/boogrocha/internal/filter"
+
 	"github.com/spf13/cobra"
 	"sidus.io/boogrocha/internal/booking"
 	"sidus.io/boogrocha/internal/ranking"
 )
 
-const MaxInt = int(^uint(0) >> 1)
+const CampusFlagName = "campus"
+const SizeFlagName = "size"
 
 var filterOnCampus string
-var filterOnMaxRoomSize int
-var filterOnMinRoomSize int
-
-type roomFilter func(booking.Room) bool
+var filterOnRoomSize int
 
 func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingService) *cobra.Command {
 	bookCmd := &cobra.Command{
@@ -36,9 +36,9 @@ func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingSe
 			return nil
 		},
 	}
-	bookCmd.Flags().StringVarP(&filterOnCampus, "campus", "c", "", "Show only rooms from either (J)ohanneberg or (L)indholmen")
-	bookCmd.Flags().IntVarP(&filterOnMaxRoomSize, "max_size", "M", MaxInt, "Show only rooms with (<=) this amount of seats")
-	bookCmd.Flags().IntVarP(&filterOnMinRoomSize, "min_size", "m", 0, "Show only rooms with (>=) this amount of seats")
+
+	bookCmd.Flags().StringVarP(&filterOnCampus, CampusFlagName, "c", "", "Show only rooms from either (J)ohanneberg or (L)indholmen")
+	bookCmd.Flags().IntVarP(&filterOnRoomSize, SizeFlagName, "s", 0, "Show only rooms where a specified number of people fit")
 
 	return bookCmd
 }
@@ -62,13 +62,15 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 		available = rankings.Sort(available)
 	}
 
-	available = filterRooms(available, []roomFilter{
-		hasMaxSeats,
-		hasMinSeats,
-		isOnCampus,
-	})
+	campusFlagUsed := cmd.Flags().Changed(CampusFlagName)
+	sizeFlagUsed := cmd.Flags().Changed(SizeFlagName)
 
-	showAvailable(available)
+	available = filter.Filter(available, getFilters(
+		campusFlagUsed,
+		sizeFlagUsed,
+	))
+
+	showAvailable(available, sizeFlagUsed)
 
 	room, err := prompt("Room to book")
 	if err != nil {
@@ -118,27 +120,6 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 	}
 }
 
-func filterRooms(rs []booking.Room, fs []roomFilter) []booking.Room {
-	return filter(rs, func(r booking.Room) bool {
-		for _, f := range fs {
-			if !f(r) {
-				return false
-			}
-		}
-		return true
-	})
-}
-
-func filter(xs []booking.Room, f roomFilter) []booking.Room {
-	var ys []booking.Room
-	for _, x := range xs {
-		if f(x) {
-			ys = append(ys, x)
-		}
-	}
-	return ys
-}
-
 func isOnCampus(room booking.Room) bool {
 	if filterOnCampus == "" {
 		return true
@@ -152,12 +133,19 @@ func isOnCampus(room booking.Room) bool {
 	return strings.ToLower(room.Campus) == strings.ToLower(filterOnCampus)
 }
 
-func hasMaxSeats(room booking.Room) bool {
-	return room.Seats <= filterOnMaxRoomSize
+func hasSeats(room booking.Room) bool {
+	return room.Seats >= filterOnRoomSize
 }
 
-func hasMinSeats(room booking.Room) bool {
-	return room.Seats >= filterOnMinRoomSize
+func getFilters(campusFilterUsed, sizeFilterUsed bool) []filter.RoomFilter {
+	var roomFilters []filter.RoomFilter
+	if campusFilterUsed {
+		roomFilters = append(roomFilters, isOnCampus)
+	}
+	if sizeFilterUsed {
+		roomFilters = append(roomFilters, hasSeats)
+	}
+	return roomFilters
 }
 
 func prompt(message string) (string, error) {
@@ -188,7 +176,7 @@ func readArgs(args []string) (time.Time, time.Time) {
 	return date.Add(start), date.Add(end)
 }
 
-func showAvailable(available []booking.Room) {
+func showAvailable(available []booking.Room, showRoomSize bool) {
 	for i := len(available) - 1; i >= 0; i-- {
 		room := available[i]
 
@@ -199,10 +187,14 @@ func showAvailable(available []booking.Room) {
 			roomName = fmt.Sprintf("%s.%s", room.Provider, room.Id)
 		}
 
-		fmt.Printf("%4s %-7s\n",
+		roomString := fmt.Sprintf("%4s %-13s",
 			fmt.Sprintf("[%d]", i+1),
-			roomName,
-		)
+			roomName)
+		if showRoomSize {
+			roomString = fmt.Sprintf("%s (%d)",
+				roomString, room.Seats)
+		}
+		fmt.Println(roomString)
 	}
 }
 
