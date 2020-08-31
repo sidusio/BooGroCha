@@ -1,6 +1,8 @@
 package filter
 
-import "sidus.io/boogrocha/internal/booking"
+import (
+	"sidus.io/boogrocha/internal/booking"
+)
 
 type RoomFilter func(booking.Room) bool
 
@@ -15,7 +17,7 @@ func Filter(rooms []booking.Room, filters []RoomFilter) []booking.Room {
 	})
 }
 
-func filter(rooms []booking.Room, filter RoomFilter) []booking.Room {
+func filter(rooms []booking.Room, filter func(booking.Room) bool) []booking.Room {
 	var filteredRooms []booking.Room
 	for _, room := range rooms {
 		if filter(room) {
