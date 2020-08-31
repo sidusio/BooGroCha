@@ -153,12 +153,12 @@ func prompt(message string) (string, error) {
 func readArgs(args []string) (time.Time, time.Time) {
 	date, err := extractDate(args[0])
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("couldn't interpret \"%s\" as a date\n", args[0])
 		os.Exit(1)
 	}
 	start, end, err := extractTimes(args[1])
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("couldn't interpret \"%s\" as a time interval\n", args[1])
 		os.Exit(1)
 	}
 
