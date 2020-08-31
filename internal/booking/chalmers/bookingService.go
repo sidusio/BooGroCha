@@ -290,6 +290,11 @@ func printCookies(jar http.CookieJar, u string) {
 	}
 }
 
+// This function gets more information about the rooms, like on which
+// campus it is or how many seats it has. This information doesn't
+// exists on TimeEdit at the time of writing this so therefore it has been
+// collected from chalmers maps. This process requires multiple api calls per room
+// has therefore been summarised into a json and is hosted by us.
 func (bs BookingService) getRoomInfo(rs rooms) (rooms, error) {
 	var roomInfos map[string]struct {
 		Seats  int    `json:"seats"`
