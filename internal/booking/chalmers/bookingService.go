@@ -20,6 +20,7 @@ const samelURL = "https://cloud.timeedit.net/chalmers_test/web/timeedit/sso/saml
 const bookURL = "https://cloud.timeedit.net/chalmers_test/web/b1/ri1Q5008.html"
 const objectsURL = "https://cloud.timeedit.net/chalmers_test/web/b1/objects.json?part=t&types=186&step=1"
 const bookingsURL = "https://cloud.timeedit.net/chalmers_test/web/b1/my.html"
+const roomInfoURL = "https://boogrocha.sidus.io/rooms.json"
 const otherPurpose = "203460.192"
 const providerName = "ChalmersTimeEdit"
 
@@ -289,25 +290,28 @@ func printCookies(jar http.CookieJar, u string) {
 	}
 }
 
-func (bs BookingService) generateRoomInfo(rs rooms) rooms {
+func (bs BookingService) getRoomInfo(rs rooms) (rooms, error) {
 	var roomInfos map[string]struct {
 		Seats  int    `json:"seats"`
 		Campus string `json:"campus"`
 	}
 
-	resp, err := bs.client.Get("https://boogrocha.sidus.io/rooms.json")
+	resp, err := bs.client.Get(roomInfoURL)
 	if err != nil {
-		return rs
+		fmt.Println("couldn't get room info json")
+		return rs, err
 	}
 	jsonBytes, err := ioutil.ReadAll(resp.Body)
 	_ = resp.Body.Close()
 	if err != nil {
-		return rs
+		fmt.Println("couldn't read response body")
+		return rs, err
 	}
 
 	err = json.Unmarshal(jsonBytes, &roomInfos)
 	if err != nil {
-		return rs
+		fmt.Println("couldn't unmarshal room info json")
+		return rs, err
 	}
 
 	for i, r := range rs {
@@ -315,7 +319,7 @@ func (bs BookingService) generateRoomInfo(rs rooms) rooms {
 		rs[i].Campus = roomInfos[r.Name].Campus
 	}
 
-	return rs
+	return rs, nil
 }
 
 func (bs BookingService) fetchRooms(extra string) (rooms, error) {
@@ -377,7 +381,11 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 		}
 	}
 
-	rs = bs.generateRoomInfo(rs)
+	rs, err := bs.getRoomInfo(rs)
+	if err != nil {
+		fmt.Println("couldn't get room info")
+		return nil, err
+	}
 
 	return rs, nil
 }
