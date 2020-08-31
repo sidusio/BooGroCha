@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+
 	"sidus.io/boogrocha/internal/booking"
 	"sidus.io/boogrocha/internal/ranking"
 )

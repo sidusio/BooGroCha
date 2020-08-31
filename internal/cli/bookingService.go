@@ -2,8 +2,10 @@ package cli
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"os"
+
+	"github.com/spf13/viper"
+
 	"sidus.io/boogrocha/internal/booking"
 	"sidus.io/boogrocha/internal/booking/chalmers"
 )

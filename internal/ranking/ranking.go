@@ -1,8 +1,9 @@
 package ranking
 
 import (
-	"sidus.io/boogrocha/internal/booking"
 	"sort"
+
+	"sidus.io/boogrocha/internal/booking"
 )
 
 /**

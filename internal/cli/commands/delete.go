@@ -3,11 +3,13 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
-	"sidus.io/boogrocha/internal/booking"
 	"strconv"
 	"strings"
+
+	"github.com/spf13/cobra"
+
+	"sidus.io/boogrocha/internal/booking"
 )
 
 var deleteAll bool

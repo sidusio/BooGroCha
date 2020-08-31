@@ -2,8 +2,10 @@ package cli
 
 import (
 	"fmt"
-	"github.com/mitchellh/go-homedir"
 	"os"
+
+	"github.com/mitchellh/go-homedir"
+
 	"sidus.io/boogrocha/internal/ranking"
 	"sidus.io/boogrocha/internal/ranking/file"
 )

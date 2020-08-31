@@ -2,9 +2,10 @@ package chalmers
 
 import (
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"net/http"
 	"net/url"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 type form struct {

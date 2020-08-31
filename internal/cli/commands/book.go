@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"sidus.io/boogrocha/internal/filter"
-
 	"github.com/spf13/cobra"
+
 	"sidus.io/boogrocha/internal/booking"
+	"sidus.io/boogrocha/internal/filter"
 	"sidus.io/boogrocha/internal/ranking"
 )
 

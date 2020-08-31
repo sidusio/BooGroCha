@@ -3,12 +3,13 @@ package commands
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"strings"
 	"syscall"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 func ConfigCmd(getSavePassword func() func(string) error) *cobra.Command {
