@@ -3,11 +3,12 @@ package cli
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"strings"
 	"syscall"
+
+	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 const KeyringName = ApplicationName + "-password"

@@ -13,6 +13,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/publicsuffix"
+
 	"sidus.io/boogrocha/internal/booking"
 )
 

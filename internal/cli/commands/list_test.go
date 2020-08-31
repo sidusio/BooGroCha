@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/magiconair/properties/assert"
+
 	"sidus.io/boogrocha/internal/booking"
 )
 

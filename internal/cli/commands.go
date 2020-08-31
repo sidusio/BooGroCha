@@ -2,8 +2,10 @@ package cli
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
+
 	"sidus.io/boogrocha/internal/cli/commands"
 )
 

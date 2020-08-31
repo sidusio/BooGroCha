@@ -1,9 +1,10 @@
 package commands
 
 import (
-	"github.com/magiconair/properties/assert"
 	"testing"
 	"time"
+
+	"github.com/magiconair/properties/assert"
 )
 
 func TestDaysToAdd(t *testing.T) {

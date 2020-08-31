@@ -1,9 +1,11 @@
 package ranking
 
 import (
-	"github.com/stretchr/testify/assert"
-	"sidus.io/boogrocha/internal/booking"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"sidus.io/boogrocha/internal/booking"
 )
 
 func TestSort(t *testing.T) {
@@ -27,7 +29,7 @@ func TestSort(t *testing.T) {
 		Provider: "B",
 		Id:       "E",
 	}
-	
+
 	ranking := Rankings{
 		r1: 2,
 		r4: 2,
@@ -68,7 +70,7 @@ func TestUpdate(t *testing.T) {
 		Provider: "B",
 		Id:       "E",
 	}
-	
+
 	ranking := Rankings{
 		r1: 5,
 		r2: 0,

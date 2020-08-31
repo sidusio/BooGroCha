@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
 	"sidus.io/boogrocha/internal/booking"
 )
 
