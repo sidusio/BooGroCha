@@ -16,19 +16,16 @@ import (
 )
 
 const CampusFlagName = "campus"
-const SizeFlagName = "size"
+const CampusFlagDefaultValue = ""
 
-var filterOnCampus string
-var filterOnRoomSize int
+const SizeFlagName = "size"
+const SizeFlagDefaultValue = -1
 
 func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingService) *cobra.Command {
 	bookCmd := &cobra.Command{
 		Use:   "book {day} {time}",
 		Short: "Create a booking",
 		Long:  "",
-		Run: func(cmd *cobra.Command, args []string) {
-			run(cmd, args, getBS, getRS)
-		},
 		Args: func(cmd *cobra.Command, args []string) error {
 			if a := len(args); a > 2 || a == 1 {
 				return fmt.Errorf("wrong number of arguments")
@@ -37,13 +34,18 @@ func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingSe
 		},
 	}
 
-	bookCmd.Flags().StringVarP(&filterOnCampus, CampusFlagName, "c", "", "Show only rooms from either (J)ohanneberg or (L)indholmen")
-	bookCmd.Flags().IntVarP(&filterOnRoomSize, SizeFlagName, "s", 0, "Show only rooms where a specified number of people fit")
+	campus := *bookCmd.Flags().StringP(CampusFlagName, "c", CampusFlagDefaultValue, "Show only rooms from either (J)ohanneberg or (L)indholmen")
+	roomSize := *bookCmd.Flags().IntP(SizeFlagName, "s", SizeFlagDefaultValue, "Show only rooms where a specified number of people fit")
+
+	bookCmd.Run = func(cmd *cobra.Command, args []string) {
+		run(cmd, args, getBS, getRS, campus, roomSize)
+	}
 
 	return bookCmd
 }
 
-func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService, getRS func() ranking.RankingService) {
+func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService, getRS func() ranking.RankingService,
+	campus string, roomSize int) {
 	bs := getBS()
 
 	startDate, endDate := readArgs(args)
@@ -62,15 +64,17 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 		available = rankings.Sort(available)
 	}
 
-	campusFlagUsed := cmd.Flags().Changed(CampusFlagName)
-	sizeFlagUsed := cmd.Flags().Changed(SizeFlagName)
+	var filters []filter.RoomFilter
+	if cmd.Flags().Changed(CampusFlagName) {
+		filters = append(filters, getCampusFilter(campus))
+	}
+	if cmd.Flags().Changed(SizeFlagName) {
+		filters = append(filters, getSizeFilter(roomSize))
+	}
 
-	available = filter.Filter(available, getFilters(
-		campusFlagUsed,
-		sizeFlagUsed,
-	))
+	available = filter.Filter(available, filters)
 
-	showAvailable(available, sizeFlagUsed)
+	showAvailable(available, cmd.Flags().Changed(SizeFlagName))
 
 	room, err := prompt("Room to book")
 	if err != nil {
@@ -120,32 +124,22 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 	}
 }
 
-func isOnCampus(room booking.Room) bool {
-	if filterOnCampus == "" {
-		return true
+func getCampusFilter(campus string) filter.RoomFilter {
+	return func(r booking.Room) bool {
+		if len(r.Campus) == 0 {
+			return false
+		}
+		if len(campus) == 1 {
+			return string(strings.ToLower(r.Campus)[0]) == strings.ToLower(campus)
+		}
+		return strings.ToLower(r.Campus) == strings.ToLower(campus)
 	}
-	if len(room.Campus) == 0 {
-		return false
-	}
-	if len(filterOnCampus) == 1 {
-		return string(strings.ToLower(room.Campus)[0]) == strings.ToLower(filterOnCampus)
-	}
-	return strings.ToLower(room.Campus) == strings.ToLower(filterOnCampus)
 }
 
-func hasSeats(room booking.Room) bool {
-	return room.Seats >= filterOnRoomSize
-}
-
-func getFilters(campusFilterUsed, sizeFilterUsed bool) []filter.RoomFilter {
-	var roomFilters []filter.RoomFilter
-	if campusFilterUsed {
-		roomFilters = append(roomFilters, isOnCampus)
+func getSizeFilter(size int) filter.RoomFilter {
+	return func(r booking.Room) bool {
+		return r.Seats >= size
 	}
-	if sizeFilterUsed {
-		roomFilters = append(roomFilters, hasSeats)
-	}
-	return roomFilters
 }
 
 func prompt(message string) (string, error) {
