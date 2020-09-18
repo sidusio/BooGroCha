@@ -12,26 +12,18 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  publish_aur_package:
+    name: 'Publish to AUR'
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Verifies and builds the package.
-      - name: Arch Linux PKGBUILD builder action
-        uses: 2m/arch-pkgbuild-builder@v1.16
-        with:
-          target: 'pkgbuild'
-          pkgname: 'boogrocha'
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      # Verifies if the .SRCINFO is up to date with the PKGBUILD.
-      - name: Arch Linux PKGBUILD builder action
-        uses: 2m/arch-pkgbuild-builder@v1.16
-        with:
-          target: 'srcinfo'
-          pkgname: 'boogrocha'
-
+      - name: Update PKGBUILD
+        run: sed -i "s/TAG/${GITHUB_REF##*/}/g" PKGBUILD
 
       # Publish to AUR
       - name: Publish AUR package
@@ -46,7 +38,7 @@ jobs:
           # The username to use when creating the new commit
           commit_username: githubaction
           # The email to use when creating the new commit
-          commit_email: karl@wikstrom.io
+          commit_email: boogrocha@sidus.io
           # Your private key with access to AUR package.
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
           # Commit message to use when creating the new commit
