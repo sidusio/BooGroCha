@@ -6,7 +6,6 @@ on:
 
 jobs:
   publish_aur_package:
-    if: github.event.base_ref == 'refs/heads/master'
     name: 'Publish to AUR'
     runs-on: ubuntu-latest
     steps:
