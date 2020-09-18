@@ -46,7 +46,7 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: Boogrocha ${{ github.ref }}
-          draft: false
+          draft: true
           prerelease: false
 
       - name: Populate release with linux binary
