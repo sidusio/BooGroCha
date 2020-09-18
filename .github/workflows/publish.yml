@@ -1,0 +1,59 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Publish to AUR
+
+# Controls when the action will run. Triggers the workflow on push events but
+# only for the tags
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Verifies and builds the package.
+      - name: Arch Linux PKGBUILD builder action
+        uses: 2m/arch-pkgbuild-builder@v1.16
+        with:
+          target: 'pkgbuild'
+          pkgname: 'boogrocha'
+
+      # Verifies if the .SRCINFO is up to date with the PKGBUILD.
+      - name: Arch Linux PKGBUILD builder action
+        uses: 2m/arch-pkgbuild-builder@v1.16
+        with:
+          target: 'srcinfo'
+          pkgname: 'boogrocha'
+
+
+      # Publish to AUR
+      - name: Publish AUR package
+        # You may pin to the exact commit or the version.
+        # uses: KSXGitHub/github-actions-deploy-aur@350bf5df07fceaa2e3453704bfe1dc0250228ba1
+        uses: KSXGitHub/github-actions-deploy-aur@v2.2.0
+        with:
+          # AUR package name
+          pkgname: boogrocha
+          # Path to PKGBUILD file
+          pkgbuild: PKGBUILD
+          # The username to use when creating the new commit
+          commit_username: githubaction
+          # The email to use when creating the new commit
+          commit_email: karl@wikstrom.io
+          # Your private key with access to AUR package.
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          # Commit message to use when creating the new commit
+          #commit_message: # optional, default is Update PKGBUILD and .SRCINFO with GitHub Actions
+          # Allow empty commits, i.e. commits with no change.
+          #allow_empty_commits: # optional, default is true
+          # Use --force when push to the AUR.
+          #force_push: # optional, default is false
+          # Comma-separated list of types to use when adding aur.archlinux.org to known hosts
+          #ssh_keyscan_types: # optional, default is rsa,dsa,ecdsa,ed25519
