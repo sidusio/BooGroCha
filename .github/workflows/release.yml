@@ -7,7 +7,6 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
   create_github_release:
     name: 'Create Github release'
     runs-on: ubuntu-latest
@@ -58,7 +57,6 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./out/bgc
           asset_name: bgc-linux
-          asset_label: Linux binary
           asset_content_type: application/octet-stream
 
       - name: Populate release with macos binary
@@ -69,7 +67,6 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./out/bgc-darwin
           asset_name: bgc-darwin
-          asset_label: MacOS binary
           asset_content_type: application/octet-stream
 
       - name: Populate release with windows binary
@@ -80,5 +77,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./out/bgc.exe
           asset_name: bgc-windows.exe
-          asset_label: Windows binary
           asset_content_type: application/octet-stream
