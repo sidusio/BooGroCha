@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Update PKGBUILD
-        run: sed -i "s/TAG/${GITHUB_REF##*/}/g" PKGBUILD
+        run: sed -i "s/TAG/${GITHUB_REF##*/}/g" build/PKGBUILD
 
       # Publish to AUR
       - name: Publish AUR package
@@ -34,7 +34,7 @@ jobs:
           # AUR package name
           pkgname: boogrocha
           # Path to PKGBUILD file
-          pkgbuild: PKGBUILD
+          pkgbuild: build/PKGBUILD
           # The username to use when creating the new commit
           commit_username: githubaction
           # The email to use when creating the new commit
