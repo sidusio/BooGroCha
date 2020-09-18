@@ -1,4 +1,4 @@
-name: Publish to AUR
+name: Publish to Arch User Repository (AUR)
 
 on:
   release:
