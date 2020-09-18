@@ -46,6 +46,6 @@ jobs:
           # Allow empty commits, i.e. commits with no change.
           #allow_empty_commits: # optional, default is true
           # Use --force when push to the AUR.
-          #force_push: # optional, default is false
+          force_push: true # optional, default is false
           # Comma-separated list of types to use when adding aur.archlinux.org to known hosts
           #ssh_keyscan_types: # optional, default is rsa,dsa,ecdsa,ed25519
