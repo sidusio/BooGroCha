@@ -32,9 +32,33 @@ jobs:
     name: 'Create Github release'
     runs-on: ubuntu-latest
     steps:
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.14
+        id: go
+
       - name: Checkout code
         uses: actions/checkout@v2
-        
+
+      - name: Get dependencies
+        run: go mod download
+
+      - name: Build for linux
+        env:
+          GOOS: linux
+        run: go build -o ./out/bgc ./cmd/bgc
+
+      - name: Build for macos
+        env:
+          GOOS: darwin
+        run: go build -o ./out/bgc-darwin ./cmd/bgc
+
+      - name: Build for windows
+        env:
+          GOOS: windows
+        run: go build -o ./out/bgc.exe ./cmd/bgc
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -42,6 +66,39 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
+          release_name: Boogrocha ${{ github.ref }}
+          draft: false
           prerelease: false
+
+      - name: Populate release with linux binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./out/bgc
+          asset_name: bgc-linux
+          asset_label: Linux binary
+          asset_content_type: application/octet-stream
+
+      - name: Populate release with macos binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./out/bgc-darwin
+          asset_name: bgc-darwin
+          asset_label: MacOS binary
+          asset_content_type: application/octet-stream
+
+      - name: Populate release with windows binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./out/bgc.exe
+          asset_name: bgc-windows.exe
+          asset_label: Windows binary
+          asset_content_type: application/octet-stream
