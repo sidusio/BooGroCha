@@ -1,10 +1,10 @@
 #Maintainer: Karl Wikström <boogrocha@sidus.io>
 #Maintainer: William Leven <boogrocha@sidus.io>
 
+tag=
 pkgname=boogrocha
 pkgver=$tag
 pkgrel=1
-tag=
 pkgdesc="A lightweight, easy to use command-line application (bgc) for managing your group room bookings at Chalmers University of Technology"
 arch=('x86_64')
 conflicts=(bgc)
