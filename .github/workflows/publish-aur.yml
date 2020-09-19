@@ -17,7 +17,7 @@ jobs:
 
       - name: Update PKGBUILD
         run: |
-          sed -i "s/tag=/tag=${GITHUB_REF##*/}/g" build/PKGBUILD \
+          sed -i "s/tag=/tag=${GITHUB_REF##*/}/g" build/PKGBUILD
           sed -i "s/sha256sums=/sha256sums=('$(sha256sum ${GITHUB_REF##*/}.tar.gz | awk '{print $1;}')')/g" build/PKGBUILD
 
       - name: Publish AUR package
