@@ -12,7 +12,7 @@ provides=(bgc)
 url="https://github.com/sidusio/boogrocha"
 license=("GPL3")
 makedepends=(go)
-source=($pkgname::$url/archive/$tag.tar.gz)
+source=($url/archive/$tag.tar.gz)
 sha256sums=
 
 build() {
