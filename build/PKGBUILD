@@ -3,7 +3,7 @@
 
 _tag=
 pkgname=boogrocha
-pkgver=$tag
+pkgver=$_tag
 pkgrel=1
 pkgdesc="A lightweight, easy to use command-line application (bgc) for managing your group room bookings at Chalmers University of Technology"
 arch=('x86_64')
@@ -12,7 +12,7 @@ provides=(bgc)
 url="https://github.com/sidusio/boogrocha"
 license=("GPL3")
 makedepends=(go)
-source=($url/archive/$tag.tar.gz)
+source=($url/archive/$_tag.tar.gz)
 sha256sums=
 # The name of the root directory of the tar.gz that Github
 # automatically creates and which therefore will be extracted
