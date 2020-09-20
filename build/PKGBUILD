@@ -1,7 +1,7 @@
 #Maintainer: Karl Wikström <boogrocha@sidus.io>
 #Maintainer: William Leven <boogrocha@sidus.io>
 
-tag=
+_tag=
 pkgname=boogrocha
 pkgver=$tag
 pkgrel=1
@@ -14,11 +14,22 @@ license=("GPL3")
 makedepends=(go)
 source=($url/archive/$tag.tar.gz)
 sha256sums=
+# The name of the root directory of the tar.gz that Github
+# automatically creates and which therefore will be extracted
+_src="BooGroCha-${pkgver:1}"
 
 build() {
-    go build ./$pkgname/cmd/bgc
+    cd $_src
+    # Build as per Go package guidelines
+    go build \
+      -trimpath \
+      -buildmode=pie \
+      -mod=readonly \
+      -modcacherw \
+      -ldflags "-linkmode external -extldflags \"${LDFLAGS}\"" \
+      ./cmd/bgc
 }
 
 package() {
-    install -Dm755 ./$pkgname/bgc "$pkgdir"/usr/bin/bgc
+    install -Dm755 ./$_src/bgc "$pkgdir"/usr/bin/bgc
 }
