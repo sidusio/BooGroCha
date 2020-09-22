@@ -1,6 +1,7 @@
 #Maintainer: Karl Wikström <boogrocha@sidus.io>
 #Maintainer: William Leven <boogrocha@sidus.io>
 
+# _tag and sha256 is populated by the pipeline
 _tag=
 pkgname=boogrocha
 pkgver=$_tag
@@ -21,6 +22,7 @@ _src="BooGroCha-${pkgver:1}"
 build() {
     cd $_src
     # Build as per Go package guidelines
+    # https://wiki.archlinux.org/index.php/Go_package_guidelines#Flags_and_build_options
     go build \
       -trimpath \
       -buildmode=pie \
