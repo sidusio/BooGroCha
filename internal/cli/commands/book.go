@@ -29,11 +29,11 @@ func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingSe
 		Args:  cobra.ExactArgs(2),
 	}
 
-	campus := *bookCmd.Flags().StringP(CampusFlagName, "c", CampusFlagDefaultValue, "Show only rooms from either (J)ohanneberg or (L)indholmen")
-	roomSize := *bookCmd.Flags().IntP(SizeFlagName, "s", SizeFlagDefaultValue, "Show only rooms where a specified number of people fit")
+	campus := bookCmd.Flags().StringP(CampusFlagName, "c", CampusFlagDefaultValue, "Show only rooms from either (J)ohanneberg or (L)indholmen")
+	roomSize := bookCmd.Flags().IntP(SizeFlagName, "s", SizeFlagDefaultValue, "Show only rooms where a specified number of people fit")
 
 	bookCmd.Run = func(cmd *cobra.Command, args []string) {
-		run(cmd, args, getBS, getRS, campus, roomSize)
+		run(cmd, args, getBS, getRS, *campus, *roomSize)
 	}
 
 	return bookCmd
