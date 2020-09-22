@@ -17,8 +17,10 @@ jobs:
 
       - name: Update PKGBUILD
         run: |
-          sed -i "s/tag=/tag=${GITHUB_REF##*/}/g" build/PKGBUILD
-          sed -i "s/sha256sums=/sha256sums=('$(sha256sum ${GITHUB_REF##*/}.tar.gz | awk '{print $1;}')')/g" build/PKGBUILD
+          tag=${GITHUB_REF##*/}
+          hash=$(sha256sum $tag.tar.gz | awk '{print $1;}')
+          sed -i "s/tag=/tag=$tag/g" build/PKGBUILD
+          sed -i "s/sha256sums=/sha256sums=('$hash')/g" build/PKGBUILD
 
       - name: Publish AUR package
         uses: KSXGitHub/github-actions-deploy-aur@v2.2.0
