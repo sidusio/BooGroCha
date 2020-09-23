@@ -25,6 +25,14 @@ const roomInfoURL = "https://boogrocha.sidus.io/rooms.json"
 const otherPurpose = "203460.192"
 const providerName = "ChalmersTimeEdit"
 
+var studentUnionRooms = []string{
+	"Grupprum 1",
+	"Grupprum 2",
+	"Grupprum 3",
+	"Musikrummet",
+	"Motionshallen",
+}
+
 type BookingService struct {
 	client *http.Client
 	rooms  rooms
@@ -375,7 +383,7 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 
 		for _, r := range jsonResponse.Rooms {
 			rs = append(rs, room{
-				Name: r.Fields.Name,
+				Name: strings.Trim(r.Fields.Name, " "),
 				Id:   r.Id,
 			})
 		}
@@ -384,6 +392,17 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 			start += max
 		} else {
 			break
+		}
+	}
+
+	// Since student union room shouldn't be booked on chalmers_test we
+	// remove them from this list.
+	for _, sur := range studentUnionRooms {
+		for i, r := range rs {
+			if sur == r.Name {
+				rs = rs.remove(i)
+				break
+			}
 		}
 	}
 
