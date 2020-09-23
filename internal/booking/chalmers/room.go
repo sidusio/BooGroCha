@@ -28,3 +28,7 @@ func (rs rooms) nameFromId(id string) (string, error) {
 	}
 	return "", fmt.Errorf("no such room")
 }
+
+func (rs rooms) remove(i int) rooms {
+	return append(rs[:i], rs[i+1:]...)
+}
