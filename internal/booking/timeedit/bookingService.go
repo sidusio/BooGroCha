@@ -27,7 +27,7 @@ const objectsURLFormat = "https://cloud.timeedit.net/%s/web/b1/objects.json?part
 const bookingsURLFormat = "https://cloud.timeedit.net/%s/web/b1/my.html"
 const roomInfoURL = "https://boogrocha.sidus.io/rooms.json"
 const otherPurpose = "203460.192"
-const providerName = "TimeEdit"
+const BaseProvider = "TimeEdit"
 
 var studentUnionRooms = []string{
 	"Grupprum 1",
@@ -154,7 +154,7 @@ func (bs BookingService) MyBookings(timeEditVersion string) ([]booking.Booking, 
 				Start: startTime,
 				End:   endTime,
 				Room: booking.Room{
-					Provider: providerName,
+					Provider: BaseProvider + timeEditVersion,
 					Id:       roomInfo,
 				},
 				Id: id,
@@ -201,7 +201,7 @@ func (bs BookingService) Available(start time.Time, end time.Time, timeEditVersi
 
 	for _, room := range rooms {
 		result = append(result, booking.Room{
-			Provider: providerName,
+			Provider: BaseProvider + timeEditVersion,
 			Id:       room.Name,
 			Seats:    room.Seats,
 			Campus:   room.Campus,

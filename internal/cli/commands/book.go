@@ -176,7 +176,7 @@ func showAvailable(available []booking.Room, showRoomSize bool) {
 
 		prevIsSame := i > 0 && available[i-1].Id == room.Id
 		nextIsSame := i < len(available)-1 && available[i+1].Id == room.Id
-		roomName := fmt.Sprintf("(%s): %s", room.Provider, room.Id)
+		roomName := room.Id
 		if prevIsSame || nextIsSame {
 			roomName = fmt.Sprintf("%s.%s", room.Provider, room.Id)
 		}

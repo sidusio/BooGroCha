@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"sidus.io/boogrocha/internal/booking/timeedit"
+
 	"github.com/spf13/viper"
 
 	"sidus.io/boogrocha/internal/booking"
@@ -31,8 +33,8 @@ func getBookingService() booking.BookingService {
 	}
 
 	bs := directory.NewBookingService(map[string]booking.BookingService{
-		"TimeEditchalmers":      chalmersBS,
-		"TimeEditchalmers_test": chalmersTestBS,
+		timeedit.BaseProvider + timeedit.Chalmers:     chalmersBS,
+		timeedit.BaseProvider + timeedit.ChalmersTest: chalmersTestBS,
 	}, &logfmt.Logger{})
 
 	return bs
