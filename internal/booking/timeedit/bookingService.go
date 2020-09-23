@@ -1,4 +1,4 @@
-package chalmers
+package timeedit
 
 import (
 	"encoding/json"
@@ -11,19 +11,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/publicsuffix"
+
+	"github.com/PuerkitoBio/goquery"
 
 	"sidus.io/boogrocha/internal/booking"
 )
 
-const samelURL = "https://cloud.timeedit.net/chalmers_test/web/timeedit/sso/saml2_test?back=https%3A%2F%2Fcloud.timeedit.net%2Fchalmers_test%2Fweb%2Fb1%2F"
-const bookURL = "https://cloud.timeedit.net/chalmers_test/web/b1/ri1Q5008.html"
-const objectsURL = "https://cloud.timeedit.net/chalmers_test/web/b1/objects.json?part=t&types=186&step=1"
-const bookingsURL = "https://cloud.timeedit.net/chalmers_test/web/b1/my.html"
+const ChalmersTest = "chalmers_test"
+const Chalmers = "chalmers"
+
+const samlURLFormat = "https://cloud.timeedit.net/%s/web/timeedit/sso/%s?back=https://cloud.timeedit.net/%s/web/b1/"
+const bookURLFormat = "https://cloud.timeedit.net/%s/web/b1/ri1Q5008.html"
+const objectsURLFormat = "https://cloud.timeedit.net/%s/web/b1/objects.json?part=t&types=186&step=1"
+const bookingsURLFormat = "https://cloud.timeedit.net/%s/web/b1/my.html"
 const roomInfoURL = "https://boogrocha.sidus.io/rooms.json"
 const otherPurpose = "203460.192"
-const providerName = "ChalmersTimeEdit"
+const providerName = "TimeEdit"
 
 var studentUnionRooms = []string{
 	"Grupprum 1",
@@ -35,10 +39,12 @@ var studentUnionRooms = []string{
 
 type BookingService struct {
 	client *http.Client
-	rooms  rooms
+	rooms  Rooms
 }
 
-func (bs BookingService) Book(booking booking.Booking) error {
+func (bs BookingService) Book(booking booking.Booking, timeEditVersion string) error {
+	bookingURL := fmt.Sprintf(bookURLFormat, timeEditVersion)
+
 	formData := url.Values{}
 	roomId, err := bs.rooms.idFromName(booking.Room.Id)
 	if err != nil {
@@ -51,8 +57,8 @@ func (bs BookingService) Book(booking booking.Booking) error {
 	formData.Add("endtime", booking.End.Format("15:04"))
 	formData.Add("fe2", booking.Text)
 	formData.Add("fe8", "Booked with BookingDemo") // Todo
-	formData.Add("url", bookURL)
-	resp, err := bs.client.PostForm(bookURL, formData)
+	formData.Add("url", bookingURL)
+	resp, err := bs.client.PostForm(bookingURL, formData)
 	if err != nil {
 		return err
 	}
@@ -68,7 +74,9 @@ func (bs BookingService) Book(booking booking.Booking) error {
 	return nil
 }
 
-func (bs BookingService) UnBook(booking booking.Booking) error {
+func (bs BookingService) UnBook(booking booking.Booking, timeEditVersion string) error {
+	bookingsURL := fmt.Sprintf(bookingsURLFormat, timeEditVersion)
+
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s?id=%s", bookingsURL, booking.Id), nil)
 	if err != nil {
 		return err
@@ -88,7 +96,8 @@ func (bs BookingService) UnBook(booking booking.Booking) error {
 	return nil
 }
 
-func (bs BookingService) MyBookings() ([]booking.Booking, error) {
+func (bs BookingService) MyBookings(timeEditVersion string) ([]booking.Booking, error) {
+	bookingsURL := fmt.Sprintf(bookingsURLFormat, timeEditVersion)
 	resp, err := bs.client.Get(bookingsURL)
 	if err != nil {
 		return nil, err
@@ -135,7 +144,7 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 				return nil, err
 			}
 
-			text, err := bs.getText(id)
+			text, err := bs.getText(id, timeEditVersion)
 			if err != nil {
 				return nil, err
 			}
@@ -155,7 +164,8 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 	return bookings, nil
 }
 
-func (bs BookingService) getText(id string) (string, error) {
+func (bs BookingService) getText(id string, timeEditVersion string) (string, error) {
+	bookingsURL := fmt.Sprintf(bookingsURLFormat, timeEditVersion)
 	resp, err := bs.client.Get(fmt.Sprintf("%s?step=3&id=%s", bookingsURL, id))
 	if err != nil {
 		return "", err
@@ -176,14 +186,14 @@ func (bs BookingService) getText(id string) (string, error) {
 	return text, nil
 }
 
-func (bs BookingService) Available(start time.Time, end time.Time) ([]booking.Room, error) {
+func (bs BookingService) Available(start time.Time, end time.Time, timeEditVersion string) ([]booking.Room, error) {
 	date := start.Format("20060102")
 	dates := fmt.Sprintf("%s-%s", date, date)
 
 	startTime := start.Format("15:04")
 	endTime := end.Format("15:04")
 
-	rooms, err := bs.fetchRooms(fmt.Sprintf("dates=%s&starttime=%s&endtime=%s", dates, startTime, endTime))
+	rooms, err := bs.fetchRooms(fmt.Sprintf("dates=%s&starttime=%s&endtime=%s", dates, startTime, endTime), timeEditVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +210,22 @@ func (bs BookingService) Available(start time.Time, end time.Time) ([]booking.Ro
 	return result, nil
 }
 
-func NewBookingService(cid, pass string) (BookingService, error) {
+func NewBookingService(cid, pass, timeEditVersion string) (BookingService, error) {
+	bs, err := login(cid, pass, timeEditVersion)
+	if err != nil {
+		return BookingService{}, err
+	}
+
+	rs, err := bs.fetchRooms("", timeEditVersion) // TODO
+	if err != nil {
+		return BookingService{}, err
+	}
+	bs.rooms = rs
+
+	return bs, nil
+}
+
+func login(cid string, pass string, timeEditVersion string) (BookingService, error) {
 	// Setup http client with a cookie jar
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
@@ -209,9 +234,17 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 	client := &http.Client{
 		Jar: jar,
 	}
+	var saml string
+	if timeEditVersion == "chalmers_test" {
+		saml = "saml2_test"
+	} else {
+		saml = "saml2"
+	}
+
+	samlURL := fmt.Sprintf(samlURLFormat, timeEditVersion, saml, timeEditVersion)
 
 	// Initiate SAML auth flow
-	resp, err := client.Get(samelURL)
+	resp, err := client.Get(samlURL)
 	if err != nil {
 		return BookingService{}, err
 	}
@@ -267,7 +300,7 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 	}
 	success = false
 	for _, cookie := range jar.Cookies(u) {
-		if cookie.Name == "TEchalmers_testweb" {
+		if cookie.Name == fmt.Sprintf("TE%sweb", timeEditVersion) {
 			success = true
 			break
 		}
@@ -276,17 +309,9 @@ func NewBookingService(cid, pass string) (BookingService, error) {
 		return BookingService{}, fmt.Errorf("failed to retrive cookie")
 	}
 
-	bs := BookingService{
+	return BookingService{
 		client: client,
-	}
-
-	rs, err := bs.fetchRooms("") // TODO
-	if err != nil {
-		return BookingService{}, err
-	}
-	bs.rooms = rs
-
-	return bs, nil
+	}, nil
 }
 
 func printCookies(jar http.CookieJar, u string) {
@@ -304,7 +329,7 @@ func printCookies(jar http.CookieJar, u string) {
 // exists on TimeEdit at the time of writing this so therefore it has been
 // collected from chalmers maps. This process requires multiple api calls per room
 // has therefore been summarised into a json and is hosted by us.
-func (bs BookingService) getRoomInfo(rs rooms) (rooms, error) {
+func (bs BookingService) getRoomInfo(rs Rooms) (Rooms, error) {
 	var roomInfos map[string]struct {
 		Seats  int    `json:"seats"`
 		Campus string `json:"campus"`
@@ -336,7 +361,7 @@ func (bs BookingService) getRoomInfo(rs rooms) (rooms, error) {
 	return rs, nil
 }
 
-func (bs BookingService) fetchRooms(extra string) (rooms, error) {
+func (bs BookingService) fetchRooms(extra string, timeEditVersion string) (Rooms, error) {
 	var jsonResponse struct {
 		HasMore bool `json:"hasMore"`
 		Rooms   []struct {
@@ -347,10 +372,12 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 		} `json:"objects"`
 	}
 
+	objectsURL := fmt.Sprintf(objectsURLFormat, timeEditVersion)
+
 	start := 0
 	max := 50
 
-	var rs rooms
+	var rs = Rooms{}
 
 	for {
 		url := fmt.Sprintf("%s&max=%d&start=%d", objectsURL, max, start)
@@ -397,13 +424,12 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 
 	// Since student union room shouldn't be booked on chalmers_test we
 	// remove them from this list.
-	for _, sur := range studentUnionRooms {
-		for i, r := range rs {
-			if sur == r.Name {
-				rs = rs.remove(i)
-				break
-			}
+	if timeEditVersion == ChalmersTest {
+		for _, sur := range studentUnionRooms {
+			rs = rs.removeWithName(sur)
 		}
+	} else {
+		rs = rs.keepWithNames(studentUnionRooms)
 	}
 
 	rs, err := bs.getRoomInfo(rs)

@@ -1,4 +1,4 @@
-package chalmers
+package timeedit
 
 import (
 	"fmt"
