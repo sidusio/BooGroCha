@@ -21,6 +21,12 @@ const CampusFlagDefaultValue = ""
 const SizeFlagName = "size"
 const SizeFlagDefaultValue = -1
 
+const RoomFlagName = "room"
+const RoomFlagDefaultValue = ""
+
+const MessageFlagName = "message"
+const MessageFlagDefaultValue = ""
+
 func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingService) *cobra.Command {
 	bookCmd := &cobra.Command{
 		Use:   "book {day} {time}",
@@ -31,16 +37,18 @@ func BookCmd(getBS func() booking.BookingService, getRS func() ranking.RankingSe
 
 	campus := bookCmd.Flags().StringP(CampusFlagName, "c", CampusFlagDefaultValue, "Show only rooms from either (J)ohanneberg or (L)indholmen")
 	roomSize := bookCmd.Flags().IntP(SizeFlagName, "s", SizeFlagDefaultValue, "Show only rooms where a specified number of people fit")
+	roomName := bookCmd.Flags().StringP(RoomFlagName, "r", RoomFlagDefaultValue, "Book specified room")
+	message := bookCmd.Flags().StringP(MessageFlagName, "m", MessageFlagDefaultValue, "Use specified message when booking")
 
 	bookCmd.Run = func(cmd *cobra.Command, args []string) {
-		run(cmd, args, getBS, getRS, *campus, *roomSize)
+		run(cmd, args, getBS, getRS, *campus, *roomSize, *roomName, *message)
 	}
 
 	return bookCmd
 }
 
 func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService, getRS func() ranking.RankingService,
-	campus string, roomSize int) {
+	campus string, roomSize int, roomName string, message string) {
 	bs := getBS()
 
 	startDate, endDate := readArgs(args)
@@ -64,64 +72,91 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 		available = rankings.Sort(available)
 	}
 
-	var filters []filter.RoomFilter
-	if cmd.Flags().Changed(CampusFlagName) {
-		filters = append(filters, getCampusFilter(campus))
-	}
-	if cmd.Flags().Changed(SizeFlagName) {
-		filters = append(filters, getSizeFilter(roomSize))
-	}
+	var n int
 
-	available = filter.Filter(available, filters)
-
-	showAvailable(available, cmd.Flags().Changed(SizeFlagName))
-
-	room, err := prompt("Room to book")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	n, err := strconv.Atoi(room)
-	n--
-	if err != nil {
-		fmt.Printf("Invalid Room\n")
-		os.Exit(1)
-	}
-
-	message, err := prompt("Message to add with the booking (default: empty)")
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("No booking was made")
-		os.Exit(1)
-	}
-
-	if n < len(available) && n >= 0 {
-		fmt.Printf("Booking %s...\n", available[n].Id)
-		booking := booking.Booking{
-			Room:  available[n],
-			Start: startDate,
-			End:   endDate,
-			Text:  message,
+	if !cmd.Flags().Changed(RoomFlagName) {
+		var filters []filter.RoomFilter
+		if cmd.Flags().Changed(CampusFlagName) {
+			filters = append(filters, getCampusFilter(campus))
 		}
-		err := bs.Book(booking)
+		if cmd.Flags().Changed(SizeFlagName) {
+			filters = append(filters, getSizeFilter(roomSize))
+		}
+
+		available = filter.Filter(available, filters)
+
+		showAvailable(available, cmd.Flags().Changed(SizeFlagName))
+
+		room, err := prompt("Room to book")
 		if err != nil {
-			fmt.Println("couldn't book room")
+			fmt.Println(err)
 			os.Exit(1)
 		}
-		fmt.Printf("Booked %s successfully!\n", available[n].Id)
 
-		if rankings != nil {
-			rankings.Update(available[n], available)
-			err := rs.SaveRankings(rankings)
-			if err != nil {
-				fmt.Printf("Could not save updated rankings: %v\n", err)
+		n, err = strconv.Atoi(room)
+		n--
+		if err != nil {
+			fmt.Printf("Invalid Room\n")
+			os.Exit(1)
+		}
+	}
+
+	if !cmd.Flags().Changed(MessageFlagName) {
+		message, err = prompt("Message to add with the booking (default: empty)")
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("No booking was made")
+			os.Exit(1)
+		}
+	}
+
+	var b booking.Booking
+	if cmd.Flags().Changed(RoomFlagName) {
+		bookingFound := false
+		for _, r := range available {
+			if strings.ToLower(r.Id) == strings.ToLower(roomName) {
+				b = booking.Booking{
+					Room:  r,
+					Start: startDate,
+					End:   endDate,
+					Text:  message,
+				}
+				bookingFound = true
 			}
 		}
-
+		if !bookingFound {
+			fmt.Printf("couldn't book room %s", roomName)
+			return
+		}
 	} else {
-		print("no such booking")
+		if n < len(available) && n >= 0 {
+			fmt.Printf("Booking %s...\n", available[n].Id)
+			b = booking.Booking{
+				Room:  available[n],
+				Start: startDate,
+				End:   endDate,
+				Text:  message,
+			}
+		} else {
+			print("no such booking")
+		}
 	}
+
+	err = bs.Book(b)
+	if err != nil {
+		fmt.Println("couldn't book room")
+		os.Exit(1)
+	}
+	fmt.Printf("Booked %s successfully!\n", available[n].Id)
+
+	if rankings != nil {
+		rankings.Update(available[n], available)
+		err := rs.SaveRankings(rankings)
+		if err != nil {
+			fmt.Printf("Could not save updated rankings: %v\n", err)
+		}
+	}
+
 }
 
 func getCampusFilter(campus string) filter.RoomFilter {
