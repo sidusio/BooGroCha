@@ -35,12 +35,12 @@ func runList(cmd *cobra.Command, args []string, getBS func() booking.BookingServ
 	}
 
 	if !listJSON {
-		fmt.Printf("%-7s %-13s %-15s %s\n", "DATE", "TIME", "ROOM", "TEXT")
+		fmt.Printf("%-9s %-11s %-15s %s\n", "DATE", "TIME", "ROOM", "TEXT")
 		for _, booking := range bookings {
 			date := formatDateWithWeekday(booking)
 			time := formatTime(booking)
 			text := fmt.Sprintf("\"%s\"", booking.Text)
-			fmt.Printf("%-7s %-13s %-15s %s\n",
+			fmt.Printf("%-9s %-11s %-15s %s\n",
 				date,
 				time,
 				booking.Room.Id,
