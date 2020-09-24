@@ -45,6 +45,11 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 
 	startDate, endDate := readArgs(args)
 
+	if startDate.Before(time.Now()) {
+		fmt.Printf("booking has to be in the future")
+		return
+	}
+
 	available, err := bs.Available(startDate, endDate)
 	if err != nil {
 		fmt.Println(err)
