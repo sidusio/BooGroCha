@@ -299,7 +299,7 @@ func extractDateAbsolute(s string, n time.Time) (time.Time, error) {
 		}
 		return t, nil
 	case 8:
-		format := "20160102"
+		format := "20060102"
 		t, err := time.ParseInLocation(format, s, n.Location())
 		if err != nil {
 			return n, err
