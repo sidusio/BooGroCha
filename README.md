@@ -52,6 +52,8 @@ The `book` sub-command also takes the following optional flags:
 * `--cid <cid>` to perform the book request with a specified cid
 * `--campus <campus>` or `-c <campus>` to filter the available rooms by a specified campus. (Valid campuses are `J`, `Johanneberg`, `L` and `Lindholmen`. Note that these values are not case-sensitive)
 * `--size <size>` or `-s <size>` to filter the available rooms by size and will only show the rooms that are big enough. (When a size is specified the list of available rooms will also show the capacity of each room)
+* `--room <room>` or `-r <room>` to try to book a specified room (the name of the room is case-insensitive) instead of letting you choose one interactively from the list of available rooms.
+* `--message <message>` or `-m <message>` to add a specific message to the booking instead of asking for it interactively.
 
 ### List booked rooms
 
