@@ -162,28 +162,6 @@ func (bs BookingService) MyBookings() ([]booking.Booking, error) {
 	return bookings, nil
 }
 
-func (bs BookingService) getText(id string) (string, error) {
-	bookingsURL := fmt.Sprintf(bookingsURLFormat, bs.version.String())
-	resp, err := bs.client.Get(fmt.Sprintf("%s?step=3&id=%s", bookingsURL, id))
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	text := ""
-	rows := doc.Find(".detailedResObjects tr")
-	rows.Each(func(i int, selection *goquery.Selection) {
-		if selection.Find(".columnname").Text() == "Egen text" {
-			text = selection.Find(".pr").Text()
-		}
-	})
-	return text, nil
-}
-
 func (bs BookingService) Available(start time.Time, end time.Time) ([]booking.Room, error) {
 	date := start.Format("20060102")
 	dates := fmt.Sprintf("%s-%s", date, date)
@@ -208,6 +186,10 @@ func (bs BookingService) Available(start time.Time, end time.Time) ([]booking.Ro
 	return result, nil
 }
 
+func (bs BookingService) Provider() string {
+	return BaseProvider + bs.version.String()
+}
+
 func NewBookingService(cid string, pass string, timeEditVersion version) (BookingService, error) {
 	bs, err := login(cid, pass, timeEditVersion)
 	if err != nil {
@@ -223,104 +205,26 @@ func NewBookingService(cid string, pass string, timeEditVersion version) (Bookin
 	return bs, nil
 }
 
-func login(cid string, pass string, timeEditVersion version) (BookingService, error) {
-	// Setup http client with a cookie jar
-	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+func (bs BookingService) getText(id string) (string, error) {
+	bookingsURL := fmt.Sprintf(bookingsURLFormat, bs.version.String())
+	resp, err := bs.client.Get(fmt.Sprintf("%s?step=3&id=%s", bookingsURL, id))
 	if err != nil {
-		return BookingService{}, err
+		return "", err
 	}
-	client := &http.Client{
-		Jar: jar,
-	}
-	var saml string
-	if timeEditVersion == ChalmersTest {
-		saml = "saml2_test"
-	} else {
-		saml = "saml2"
-	}
+	defer resp.Body.Close()
 
-	samlURL := fmt.Sprintf(samlURLFormat, timeEditVersion, saml, timeEditVersion)
-
-	// Initiate SAML auth flow
-	resp, err := client.Get(samlURL)
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return BookingService{}, err
+		return "", err
 	}
-
-	// Extract login form from request to cover XSS prevention values
-	form, err := getForm(resp, "#loginForm")
-	_ = resp.Body.Close()
-	if err != nil {
-		return BookingService{}, err
-	}
-
-	// Populate form with username and password
-	form.Values.Add("UserName", toUsername(cid))
-	form.Values.Add("Password", pass)
-
-	// Submit login form
-	resp, err = form.Post(client)
-	if err != nil {
-		return BookingService{}, err
-	}
-
-	// The IDP responds with a form that redirects to the original site,
-	// this form is usually auto submitted by a script snippet but we have to submit it ourselves
-	form, err = getForm(resp, "form")
-	_ = resp.Body.Close()
-	if err != nil {
-		return BookingService{}, err
-	}
-
-	// Check if login was successful
-	success := false
-	for key := range form.Values {
-		if key == "SAMLResponse" {
-			success = true
-			break
+	text := ""
+	rows := doc.Find(".detailedResObjects tr")
+	rows.Each(func(i int, selection *goquery.Selection) {
+		if selection.Find(".columnname").Text() == "Egen text" {
+			text = selection.Find(".pr").Text()
 		}
-	}
-	if !success {
-		return BookingService{}, fmt.Errorf("failed to login")
-	}
-
-	// Submit the redirect form
-	resp, err = form.Post(client)
-	if err != nil {
-		return BookingService{}, err
-	}
-	_ = resp.Body.Close()
-
-	// Check that we got the auth cookie
-	u, err := url.Parse(form.Action)
-	if err != nil {
-		return BookingService{}, err
-	}
-	success = false
-	for _, cookie := range jar.Cookies(u) {
-		if cookie.Name == fmt.Sprintf("TE%sweb", timeEditVersion) {
-			success = true
-			break
-		}
-	}
-	if !success {
-		return BookingService{}, fmt.Errorf("failed to retrive cookie")
-	}
-
-	return BookingService{
-		client:  client,
-		version: timeEditVersion,
-	}, nil
-}
-
-func printCookies(jar http.CookieJar, u string) {
-	ur, err := url.Parse(u)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, cookie := range jar.Cookies(ur) {
-		fmt.Printf("  %s: %s\n", cookie.Name, cookie.Value)
-	}
+	})
+	return text, nil
 }
 
 // This function gets more information about the rooms, like on which
@@ -444,8 +348,104 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 	return rs, nil
 }
 
-func (bs BookingService) Provider() string {
-	return BaseProvider + bs.version.String()
+func login(cid string, pass string, timeEditVersion version) (BookingService, error) {
+	// Setup http client with a cookie jar
+	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	if err != nil {
+		return BookingService{}, err
+	}
+	client := &http.Client{
+		Jar: jar,
+	}
+	var saml string
+	if timeEditVersion == ChalmersTest {
+		saml = "saml2_test"
+	} else {
+		saml = "saml2"
+	}
+
+	samlURL := fmt.Sprintf(samlURLFormat, timeEditVersion, saml, timeEditVersion)
+
+	// Initiate SAML auth flow
+	resp, err := client.Get(samlURL)
+	if err != nil {
+		return BookingService{}, err
+	}
+
+	// Extract login form from request to cover XSS prevention values
+	form, err := getForm(resp, "#loginForm")
+	_ = resp.Body.Close()
+	if err != nil {
+		return BookingService{}, err
+	}
+
+	// Populate form with username and password
+	form.Values.Add("UserName", toUsername(cid))
+	form.Values.Add("Password", pass)
+
+	// Submit login form
+	resp, err = form.Post(client)
+	if err != nil {
+		return BookingService{}, err
+	}
+
+	// The IDP responds with a form that redirects to the original site,
+	// this form is usually auto submitted by a script snippet but we have to submit it ourselves
+	form, err = getForm(resp, "form")
+	_ = resp.Body.Close()
+	if err != nil {
+		return BookingService{}, err
+	}
+
+	// Check if login was successful
+	success := false
+	for key := range form.Values {
+		if key == "SAMLResponse" {
+			success = true
+			break
+		}
+	}
+	if !success {
+		return BookingService{}, fmt.Errorf("failed to login")
+	}
+
+	// Submit the redirect form
+	resp, err = form.Post(client)
+	if err != nil {
+		return BookingService{}, err
+	}
+	_ = resp.Body.Close()
+
+	// Check that we got the auth cookie
+	u, err := url.Parse(form.Action)
+	if err != nil {
+		return BookingService{}, err
+	}
+	success = false
+	for _, cookie := range jar.Cookies(u) {
+		if cookie.Name == fmt.Sprintf("TE%sweb", timeEditVersion) {
+			success = true
+			break
+		}
+	}
+	if !success {
+		return BookingService{}, fmt.Errorf("failed to retrive cookie")
+	}
+
+	return BookingService{
+		client:  client,
+		version: timeEditVersion,
+	}, nil
+}
+
+func printCookies(jar http.CookieJar, u string) {
+	ur, err := url.Parse(u)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, cookie := range jar.Cookies(ur) {
+		fmt.Printf("  %s: %s\n", cookie.Name, cookie.Value)
+	}
 }
 
 func toUsername(cid string) string {
