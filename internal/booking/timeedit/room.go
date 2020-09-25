@@ -29,35 +29,22 @@ func (rs rooms) nameFromId(id string) (string, error) {
 	return "", fmt.Errorf("no such room")
 }
 
-func (rs rooms) remove(i int) rooms {
+func (rs rooms) removeAt(i int) rooms {
 	return append(rs[:i], rs[i+1:]...)
 }
 
-func (rs rooms) removeWithName(name string) rooms {
+func (rs rooms) remove(room room) rooms {
 	for i, r := range rs {
-		if r.Name == name {
-			return rs.remove(i)
+		if r == room {
+			return rs.removeAt(i)
 		}
 	}
 	return rs
 }
 
-func (rs rooms) removeWithNames(names []string) rooms {
-	var rooms = rs
-	for _, n := range names {
-		rooms = rooms.removeWithName(n)
+func (rs rooms) removeMany(rooms rooms) rooms {
+	for _, n := range rooms {
+		rs = rs.remove(n)
 	}
-	return rooms
-}
-
-func (rs rooms) keepWithNames(names []string) rooms {
-	var rooms = rooms{}
-	for _, r := range rs {
-		for _, n := range names {
-			if r.Name == n {
-				rooms = append(rooms, r)
-			}
-		}
-	}
-	return rooms
+	return rs
 }
