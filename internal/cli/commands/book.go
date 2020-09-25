@@ -96,15 +96,6 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 		}
 	}
 
-	if !cmd.Flags().Changed(MessageFlagName) {
-		message, err = prompt("Message to add with the booking (default: empty)")
-		if err != nil {
-			fmt.Println(err)
-			fmt.Println("No booking was made")
-			os.Exit(1)
-		}
-	}
-
 	var b booking.Booking
 	if cmd.Flags().Changed(RoomFlagName) {
 		bookingFound := false
@@ -135,6 +126,16 @@ func run(cmd *cobra.Command, args []string, getBS func() booking.BookingService,
 		} else {
 			print("no such booking")
 		}
+	}
+
+	if !cmd.Flags().Changed(MessageFlagName) {
+		message, err = prompt("Message to add with the booking (default: empty)")
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("No booking was made")
+			os.Exit(1)
+		}
+		b.Text = message
 	}
 
 	err = bs.Book(b)
