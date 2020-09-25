@@ -39,7 +39,7 @@ var studentUnionRooms = []string{
 
 type BookingService struct {
 	client *http.Client
-	rooms  Rooms
+	rooms  rooms
 }
 
 func (bs BookingService) Book(booking booking.Booking, timeEditVersion string) error {
@@ -329,7 +329,7 @@ func printCookies(jar http.CookieJar, u string) {
 // exists on TimeEdit at the time of writing this so therefore it has been
 // collected from chalmers maps. This process requires multiple api calls per room
 // has therefore been summarised into a json and is hosted by us.
-func (bs BookingService) getRoomInfo(rs Rooms) (Rooms, error) {
+func (bs BookingService) getRoomInfo(rs rooms) (rooms, error) {
 	var roomInfos map[string]struct {
 		Seats  int    `json:"seats"`
 		Campus string `json:"campus"`
@@ -361,7 +361,7 @@ func (bs BookingService) getRoomInfo(rs Rooms) (Rooms, error) {
 	return rs, nil
 }
 
-func (bs BookingService) fetchRooms(extra string, timeEditVersion string) (Rooms, error) {
+func (bs BookingService) fetchRooms(extra string, timeEditVersion string) (rooms, error) {
 	var jsonResponse struct {
 		HasMore bool `json:"hasMore"`
 		Rooms   []struct {
@@ -377,7 +377,7 @@ func (bs BookingService) fetchRooms(extra string, timeEditVersion string) (Rooms
 	start := 0
 	max := 50
 
-	var rs = Rooms{}
+	var rs = rooms{}
 
 	for {
 		url := fmt.Sprintf("%s&max=%d&start=%d", objectsURL, max, start)
