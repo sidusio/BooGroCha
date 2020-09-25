@@ -18,9 +18,6 @@ import (
 	"sidus.io/boogrocha/internal/booking"
 )
 
-const ChalmersTest = "chalmers_test"
-const Chalmers = "chalmers"
-
 const samlURLFormat = "https://cloud.timeedit.net/%s/web/timeedit/sso/%s?back=https://cloud.timeedit.net/%s/web/b1/"
 const bookURLFormat = "https://cloud.timeedit.net/%s/web/b1/ri1Q5008.html"
 const objectsURLFormat = "https://cloud.timeedit.net/%s/web/b1/objects.json?part=t&types=186&step=1"
@@ -38,12 +35,13 @@ var studentUnionRooms = []string{
 }
 
 type BookingService struct {
-	client *http.Client
-	rooms  rooms
+	client  *http.Client
+	rooms   rooms
+	version version
 }
 
-func (bs BookingService) Book(booking booking.Booking, timeEditVersion string) error {
-	bookingURL := fmt.Sprintf(bookURLFormat, timeEditVersion)
+func (bs BookingService) Book(booking booking.Booking) error {
+	bookingURL := fmt.Sprintf(bookURLFormat, bs.version.String())
 
 	formData := url.Values{}
 	roomId, err := bs.rooms.idFromName(booking.Room.Id)
@@ -74,8 +72,8 @@ func (bs BookingService) Book(booking booking.Booking, timeEditVersion string) e
 	return nil
 }
 
-func (bs BookingService) UnBook(booking booking.Booking, timeEditVersion string) error {
-	bookingsURL := fmt.Sprintf(bookingsURLFormat, timeEditVersion)
+func (bs BookingService) UnBook(booking booking.Booking) error {
+	bookingsURL := fmt.Sprintf(bookingsURLFormat, bs.version.String())
 
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s?id=%s", bookingsURL, booking.Id), nil)
 	if err != nil {
@@ -96,8 +94,8 @@ func (bs BookingService) UnBook(booking booking.Booking, timeEditVersion string)
 	return nil
 }
 
-func (bs BookingService) MyBookings(timeEditVersion string) ([]booking.Booking, error) {
-	bookingsURL := fmt.Sprintf(bookingsURLFormat, timeEditVersion)
+func (bs BookingService) MyBookings() ([]booking.Booking, error) {
+	bookingsURL := fmt.Sprintf(bookingsURLFormat, bs.version.String())
 	resp, err := bs.client.Get(bookingsURL)
 	if err != nil {
 		return nil, err
@@ -144,7 +142,7 @@ func (bs BookingService) MyBookings(timeEditVersion string) ([]booking.Booking, 
 				return nil, err
 			}
 
-			text, err := bs.getText(id, timeEditVersion)
+			text, err := bs.getText(id)
 			if err != nil {
 				return nil, err
 			}
@@ -154,7 +152,7 @@ func (bs BookingService) MyBookings(timeEditVersion string) ([]booking.Booking, 
 				Start: startTime,
 				End:   endTime,
 				Room: booking.Room{
-					Provider: BaseProvider + timeEditVersion,
+					Provider: bs.Provider(),
 					Id:       roomInfo,
 				},
 				Id: id,
@@ -164,8 +162,8 @@ func (bs BookingService) MyBookings(timeEditVersion string) ([]booking.Booking, 
 	return bookings, nil
 }
 
-func (bs BookingService) getText(id string, timeEditVersion string) (string, error) {
-	bookingsURL := fmt.Sprintf(bookingsURLFormat, timeEditVersion)
+func (bs BookingService) getText(id string) (string, error) {
+	bookingsURL := fmt.Sprintf(bookingsURLFormat, bs.version.String())
 	resp, err := bs.client.Get(fmt.Sprintf("%s?step=3&id=%s", bookingsURL, id))
 	if err != nil {
 		return "", err
@@ -186,14 +184,14 @@ func (bs BookingService) getText(id string, timeEditVersion string) (string, err
 	return text, nil
 }
 
-func (bs BookingService) Available(start time.Time, end time.Time, timeEditVersion string) ([]booking.Room, error) {
+func (bs BookingService) Available(start time.Time, end time.Time) ([]booking.Room, error) {
 	date := start.Format("20060102")
 	dates := fmt.Sprintf("%s-%s", date, date)
 
 	startTime := start.Format("15:04")
 	endTime := end.Format("15:04")
 
-	rooms, err := bs.fetchRooms(fmt.Sprintf("dates=%s&starttime=%s&endtime=%s", dates, startTime, endTime), timeEditVersion)
+	rooms, err := bs.fetchRooms(fmt.Sprintf("dates=%s&starttime=%s&endtime=%s", dates, startTime, endTime))
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +199,7 @@ func (bs BookingService) Available(start time.Time, end time.Time, timeEditVersi
 
 	for _, room := range rooms {
 		result = append(result, booking.Room{
-			Provider: BaseProvider + timeEditVersion,
+			Provider: bs.Provider(),
 			Id:       room.Name,
 			Seats:    room.Seats,
 			Campus:   room.Campus,
@@ -210,13 +208,13 @@ func (bs BookingService) Available(start time.Time, end time.Time, timeEditVersi
 	return result, nil
 }
 
-func NewBookingService(cid, pass, timeEditVersion string) (BookingService, error) {
+func NewBookingService(cid string, pass string, timeEditVersion version) (BookingService, error) {
 	bs, err := login(cid, pass, timeEditVersion)
 	if err != nil {
 		return BookingService{}, err
 	}
 
-	rs, err := bs.fetchRooms("", timeEditVersion) // TODO
+	rs, err := bs.fetchRooms("")
 	if err != nil {
 		return BookingService{}, err
 	}
@@ -225,7 +223,7 @@ func NewBookingService(cid, pass, timeEditVersion string) (BookingService, error
 	return bs, nil
 }
 
-func login(cid string, pass string, timeEditVersion string) (BookingService, error) {
+func login(cid string, pass string, timeEditVersion version) (BookingService, error) {
 	// Setup http client with a cookie jar
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
@@ -235,7 +233,7 @@ func login(cid string, pass string, timeEditVersion string) (BookingService, err
 		Jar: jar,
 	}
 	var saml string
-	if timeEditVersion == "chalmers_test" {
+	if timeEditVersion == ChalmersTest {
 		saml = "saml2_test"
 	} else {
 		saml = "saml2"
@@ -310,7 +308,8 @@ func login(cid string, pass string, timeEditVersion string) (BookingService, err
 	}
 
 	return BookingService{
-		client: client,
+		client:  client,
+		version: timeEditVersion,
 	}, nil
 }
 
@@ -361,7 +360,7 @@ func (bs BookingService) getRoomInfo(rs rooms) (rooms, error) {
 	return rs, nil
 }
 
-func (bs BookingService) fetchRooms(extra string, timeEditVersion string) (rooms, error) {
+func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 	var jsonResponse struct {
 		HasMore bool `json:"hasMore"`
 		Rooms   []struct {
@@ -372,7 +371,11 @@ func (bs BookingService) fetchRooms(extra string, timeEditVersion string) (rooms
 		} `json:"objects"`
 	}
 
-	objectsURL := fmt.Sprintf(objectsURLFormat, timeEditVersion)
+	objectsURL := fmt.Sprintf(objectsURLFormat, bs.version)
+
+	if bs.version == Chalmers {
+		extra += "&sid=1010"
+	}
 
 	start := 0
 	max := 50
@@ -424,7 +427,7 @@ func (bs BookingService) fetchRooms(extra string, timeEditVersion string) (rooms
 
 	// Since student union room shouldn't be booked on chalmers_test we
 	// remove them from this list.
-	if timeEditVersion == ChalmersTest {
+	if bs.version == ChalmersTest {
 		for _, sur := range studentUnionRooms {
 			rs = rs.removeWithName(sur)
 		}
@@ -439,6 +442,10 @@ func (bs BookingService) fetchRooms(extra string, timeEditVersion string) (rooms
 	}
 
 	return rs, nil
+}
+
+func (bs BookingService) Provider() string {
+	return BaseProvider + bs.version.String()
 }
 
 func toUsername(cid string) string {
