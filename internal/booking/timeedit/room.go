@@ -9,9 +9,9 @@ type room struct {
 	Campus string `json:"campus"`
 }
 
-type Rooms []room
+type rooms []room
 
-func (rs Rooms) idFromName(name string) (string, error) {
+func (rs rooms) idFromName(name string) (string, error) {
 	for _, room := range rs {
 		if room.Name == name {
 			return room.Id, nil
@@ -20,7 +20,7 @@ func (rs Rooms) idFromName(name string) (string, error) {
 	return "", fmt.Errorf("no such room")
 }
 
-func (rs Rooms) nameFromId(id string) (string, error) {
+func (rs rooms) nameFromId(id string) (string, error) {
 	for _, room := range rs {
 		if room.Id == id {
 			return room.Name, nil
@@ -29,11 +29,11 @@ func (rs Rooms) nameFromId(id string) (string, error) {
 	return "", fmt.Errorf("no such room")
 }
 
-func (rs Rooms) remove(i int) Rooms {
+func (rs rooms) remove(i int) rooms {
 	return append(rs[:i], rs[i+1:]...)
 }
 
-func (rs Rooms) removeWithName(name string) Rooms {
+func (rs rooms) removeWithName(name string) rooms {
 	for i, r := range rs {
 		if r.Name == name {
 			return rs.remove(i)
@@ -42,7 +42,7 @@ func (rs Rooms) removeWithName(name string) Rooms {
 	return rs
 }
 
-func (rs Rooms) removeWithNames(names []string) Rooms {
+func (rs rooms) removeWithNames(names []string) rooms {
 	var rooms = rs
 	for _, n := range names {
 		rooms = rooms.removeWithName(n)
@@ -50,8 +50,8 @@ func (rs Rooms) removeWithNames(names []string) Rooms {
 	return rooms
 }
 
-func (rs Rooms) keepWithNames(names []string) Rooms {
-	var rooms = Rooms{}
+func (rs rooms) keepWithNames(names []string) rooms {
+	var rooms = rooms{}
 	for _, r := range rs {
 		for _, n := range names {
 			if r.Name == n {
