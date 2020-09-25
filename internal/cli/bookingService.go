@@ -18,13 +18,13 @@ func getBookingService() booking.BookingService {
 		fmt.Println("No cid specified, set it permanently with 'bgc config set cid' or use the '--cid' flag")
 		os.Exit(1)
 	}
-	chalmersBS, err := timeedit.NewBookingService(viper.GetString("chalmers.cid"), getPassword(), timeedit.Chalmers)
+	chalmersBS, err := timeedit.NewBookingService(viper.GetString("chalmers.cid"), getPassword(), timeedit.VersionChalmers)
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 		os.Exit(1)
 	}
 
-	chalmersTestBS, err := timeedit.NewBookingService(viper.GetString("chalmers.cid"), getPassword(), timeedit.ChalmersTest)
+	chalmersTestBS, err := timeedit.NewBookingService(viper.GetString("chalmers.cid"), getPassword(), timeedit.VersionChalmersTest)
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 		os.Exit(1)

@@ -6,8 +6,8 @@ const chalmers = "chalmers"
 type version int
 
 const (
-	Chalmers version = iota
-	ChalmersTest
+	VersionChalmers version = iota
+	VersionChalmersTest
 )
 
 func (v version) String() string {

@@ -266,7 +266,7 @@ func (bs BookingService) getRooms(extra string) (rooms, error) {
 		objectsURL = fmt.Sprintf("%s&%s", objectsURL, extra)
 	}
 
-	if bs.version == Chalmers {
+	if bs.version == VersionChalmers {
 		extra += studentUnionRoomFilter
 	}
 
@@ -279,7 +279,7 @@ func (bs BookingService) getRooms(extra string) (rooms, error) {
 
 	// Since student union room shouldn't be booked on chalmers_test we
 	// remove them from this list.
-	if bs.version == ChalmersTest {
+	if bs.version == VersionChalmersTest {
 		studentUnionRooms, err := bs.fetchRooms(objectsURL + studentUnionRoomFilter)
 		if err != nil {
 			return nil, err
@@ -364,7 +364,7 @@ func login(cid string, pass string, timeEditVersion version) (BookingService, er
 		Jar: jar,
 	}
 	var saml string
-	if timeEditVersion == ChalmersTest {
+	if timeEditVersion == VersionChalmersTest {
 		saml = "saml2_test"
 	} else {
 		saml = "saml2"
