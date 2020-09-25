@@ -23,16 +23,10 @@ const bookURLFormat = "https://cloud.timeedit.net/%s/web/b1/ri1Q5008.html"
 const objectsURLFormat = "https://cloud.timeedit.net/%s/web/b1/objects.json?part=t&types=186&step=1"
 const bookingsURLFormat = "https://cloud.timeedit.net/%s/web/b1/my.html"
 const roomInfoURL = "https://boogrocha.sidus.io/rooms.json"
+
+const studentUnionRoomFilter = "&sid=1010"
 const otherPurpose = "203460.192"
 const BaseProvider = "TimeEdit"
-
-var studentUnionRooms = []string{
-	"Grupprum 1",
-	"Grupprum 2",
-	"Grupprum 3",
-	"Musikrummet",
-	"Motionshallen",
-}
 
 type BookingService struct {
 	client  *http.Client
@@ -169,7 +163,7 @@ func (bs BookingService) Available(start time.Time, end time.Time) ([]booking.Ro
 	startTime := start.Format("15:04")
 	endTime := end.Format("15:04")
 
-	rooms, err := bs.fetchRooms(fmt.Sprintf("dates=%s&starttime=%s&endtime=%s", dates, startTime, endTime))
+	rooms, err := bs.getRooms(fmt.Sprintf("dates=%s&starttime=%s&endtime=%s", dates, startTime, endTime))
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +190,7 @@ func NewBookingService(cid string, pass string, timeEditVersion version) (Bookin
 		return BookingService{}, err
 	}
 
-	rs, err := bs.fetchRooms("")
+	rs, err := bs.getRooms("")
 	if err != nil {
 		return BookingService{}, err
 	}
@@ -264,7 +258,45 @@ func (bs BookingService) getRoomInfo(rs rooms) (rooms, error) {
 	return rs, nil
 }
 
-func (bs BookingService) fetchRooms(extra string) (rooms, error) {
+func (bs BookingService) getRooms(extra string) (rooms, error) {
+
+	objectsURL := fmt.Sprintf(objectsURLFormat, bs.version)
+
+	if extra != "" {
+		objectsURL = fmt.Sprintf("%s&%s", objectsURL, extra)
+	}
+
+	if bs.version == Chalmers {
+		extra += studentUnionRoomFilter
+	}
+
+	objectsURL += extra
+
+	rs, err := bs.fetchRooms(objectsURL)
+	if err != nil {
+		return nil, err
+	}
+
+	// Since student union room shouldn't be booked on chalmers_test we
+	// remove them from this list.
+	if bs.version == ChalmersTest {
+		studentUnionRooms, err := bs.fetchRooms(objectsURL + studentUnionRoomFilter)
+		if err != nil {
+			return nil, err
+		}
+		rs = rs.removeMany(studentUnionRooms)
+	}
+
+	rs, err = bs.getRoomInfo(rs)
+	if err != nil {
+		fmt.Println("couldn't get room info")
+		return nil, err
+	}
+
+	return rs, nil
+}
+
+func (bs BookingService) fetchRooms(objectsURL string) (rooms, error) {
 	var jsonResponse struct {
 		HasMore bool `json:"hasMore"`
 		Rooms   []struct {
@@ -275,23 +307,14 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 		} `json:"objects"`
 	}
 
-	objectsURL := fmt.Sprintf(objectsURLFormat, bs.version)
-
-	if bs.version == Chalmers {
-		extra += "&sid=1010"
-	}
-
 	start := 0
 	max := 50
 
 	var rs = rooms{}
 
 	for {
-		url := fmt.Sprintf("%s&max=%d&start=%d", objectsURL, max, start)
-		if extra != "" {
-			url = fmt.Sprintf("%s&%s", url, extra)
-		}
-		resp, err := bs.client.Get(url)
+		requestURL := fmt.Sprintf("%s&max=%d&start=%d", objectsURL, max, start)
+		resp, err := bs.client.Get(requestURL)
 		if err != nil {
 			return nil, err
 		}
@@ -328,23 +351,6 @@ func (bs BookingService) fetchRooms(extra string) (rooms, error) {
 			break
 		}
 	}
-
-	// Since student union room shouldn't be booked on chalmers_test we
-	// remove them from this list.
-	if bs.version == ChalmersTest {
-		for _, sur := range studentUnionRooms {
-			rs = rs.removeWithName(sur)
-		}
-	} else {
-		rs = rs.keepWithNames(studentUnionRooms)
-	}
-
-	rs, err := bs.getRoomInfo(rs)
-	if err != nil {
-		fmt.Println("couldn't get room info")
-		return nil, err
-	}
-
 	return rs, nil
 }
 
