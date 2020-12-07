@@ -277,9 +277,9 @@ func (bs BookingService) getRooms(extra string) (rooms, error) {
 		return nil, err
 	}
 
-	// Since student union room shouldn't be booked on chalmers_test we
+	// Since student union room shouldn't be booked on chalmers_covid we
 	// remove them from this list.
-	if bs.version == VersionChalmersTest {
+	if bs.version == VersionChalmersCovid {
 		studentUnionRooms, err := bs.fetchRooms(objectsURL + studentUnionRoomFilter)
 		if err != nil {
 			return nil, err
@@ -364,8 +364,8 @@ func login(cid string, pass string, timeEditVersion version) (BookingService, er
 		Jar: jar,
 	}
 	var saml string
-	if timeEditVersion == VersionChalmersTest {
-		saml = "saml2_test"
+	if timeEditVersion == VersionChalmersCovid {
+		saml = "saml2_covid"
 	} else {
 		saml = "saml2"
 	}

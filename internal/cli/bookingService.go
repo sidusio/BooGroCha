@@ -24,7 +24,7 @@ func getBookingService() booking.BookingService {
 		os.Exit(1)
 	}
 
-	chalmersTestBS, err := timeedit.NewBookingService(viper.GetString("chalmers.cid"), getPassword(), timeedit.VersionChalmersTest)
+	chalmersCovidBS, err := timeedit.NewBookingService(viper.GetString("chalmers.cid"), getPassword(), timeedit.VersionChalmersCovid)
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 		os.Exit(1)
@@ -32,7 +32,7 @@ func getBookingService() booking.BookingService {
 
 	bs := directory.NewBookingService(map[string]booking.BookingService{
 		chalmersBS.Provider():     chalmersBS,
-		chalmersTestBS.Provider(): chalmersTestBS,
+		chalmersCovidBS.Provider(): chalmersCovidBS,
 	}, &logfmt.Logger{})
 
 	return bs
