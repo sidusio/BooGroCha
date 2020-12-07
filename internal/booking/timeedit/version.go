@@ -1,15 +1,15 @@
 package timeedit
 
-const chalmersTest = "chalmers_test"
+const chalmersCovid = "chalmers_covid"
 const chalmers = "chalmers"
 
 type version int
 
 const (
 	VersionChalmers version = iota
-	VersionChalmersTest
+	VersionChalmersCovid
 )
 
 func (v version) String() string {
-	return [...]string{chalmers, chalmersTest}[v]
+	return [...]string{chalmers, chalmersCovid}[v]
 }
