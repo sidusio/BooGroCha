@@ -40,6 +40,7 @@ $ bgc completion fish | source
 $ bgc completion fish > ~/.config/fish/completions/bgc.fish
 `,
 	DisableFlagsInUseLine: true,
+	Hidden: true,
 	ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 	Args:                  cobra.ExactValidArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
